@@ -58,7 +58,7 @@ def dashboard_page(request: Request, db: Session = Depends(get_db), user: User =
             "storage_usage_gb": round(storage_usage / (1024 * 1024 * 1024), 2),
             "last_backup": last_backup.created_at.isoformat() if last_backup else None,
             "last_backup_name": last_backup.database_name if last_backup else None,
-            "next_schedule": next_schedule.next_run_at.isoformat() if next_schedule else None,
+            "next_schedule": next_schedule.next_run_at.isoformat() if next_schedule and next_schedule.next_run_at else None,
             "next_schedule_name": next_schedule.name if next_schedule else None,
         },
         "recent_backups": recent_backups,

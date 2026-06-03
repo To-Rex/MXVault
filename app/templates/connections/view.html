@@ -42,17 +42,12 @@
     <div class="glass-card p-5">
       <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Quick Actions</h3>
       <div class="space-y-3">
-        <form method="post" action="/backups/run">
-          <input type="hidden" name="connection_id" value="{{ connection.id }}">
-          <input type="hidden" name="storage_provider" value="local">
-          <input type="hidden" name="retention_days" value="30">
-          <button type="submit" class="btn btn-primary w-full justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-            </svg>
-            Run Backup Now
-          </button>
-        </form>
+        <button onclick="runBackup('{{ connection.id }}')" class="btn btn-primary w-full justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+          Run Backup Now
+        </button>
         <button onclick="testConnection(this, '{{ connection.id }}')" class="btn btn-secondary w-full justify-center">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -69,7 +64,6 @@
     </div>
   </div>
 </div>
-{% endblock %}
 
 <!-- Test Result Modal -->
 <div id="testModal" class="fixed inset-0 z-[100] items-center justify-center p-4" style="display:none;animation: fadeIn 0.2s ease-out;">
@@ -80,8 +74,187 @@
   </div>
 </div>
 
+<!-- Backup Progress Modal -->
+<div id="backupModal" class="fixed inset-0 z-[100] items-center justify-center p-4" style="display:none;animation: fadeIn 0.2s ease-out;">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+  <div class="relative glass-card p-6 max-w-sm w-full" style="animation: scaleIn 0.3s ease-out;">
+    <div class="text-center">
+      <div id="backupProgressIcon" class="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-500/10 flex items-center justify-center">
+        <svg class="w-8 h-8 text-indigo-400 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3 id="backupTitle" class="text-lg font-semibold text-gray-200 mb-2">Backup in Progress</h3>
+      <p id="backupStatusText" class="text-sm text-gray-400 mb-4">Preparing backup...</p>
+      <div class="progress-bar mb-2">
+        <div id="backupProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+      </div>
+      <p id="backupPercentage" class="text-xs text-gray-500 mb-1">0%</p>
+      <p id="backupSizeInfo" class="text-xs text-gray-500 hidden"></p>
+    </div>
+    <button id="backupCloseBtn" onclick="closeBackupModal()" class="btn btn-secondary w-full mt-4 justify-center hidden">Close</button>
+    <a id="backupViewLink" href="#" class="btn btn-primary w-full mt-4 justify-center hidden">View Details</a>
+  </div>
+</div>
+{% endblock %}
+
 {% block extra_scripts %}
 <script>
+var backupPollTimer = null;
+
+function formatSize(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  var units = ['B', 'KB', 'MB', 'GB'];
+  var i = 0;
+  var size = bytes;
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return size.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+}
+
+function runBackup(connectionId) {
+  var btn = document.querySelector('.btn-primary.w-full.justify-center');
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg> Starting...';
+
+  var formData = new FormData();
+  formData.append('connection_id', connectionId);
+  formData.append('storage_provider', 'local,google_drive,yandex');
+  formData.append('retention_days', '30');
+
+  fetch('/backups/run', { method: 'POST', body: formData })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.backup_id) {
+        showBackupModal(data.backup_id, data.estimated_size_bytes);
+      } else {
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg> Run Backup Now';
+        btn.disabled = false;
+        showBackupError('Failed to start backup');
+      }
+    })
+    .catch(function(e) {
+      btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg> Run Backup Now';
+      btn.disabled = false;
+      showBackupError(e.message || 'Network error');
+    });
+}
+
+function showBackupModal(backupId, estimatedSize) {
+  document.getElementById('backupProgressIcon').innerHTML = '<svg class="w-8 h-8 text-indigo-400 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>';
+  document.getElementById('backupTitle').textContent = 'Backup in Progress';
+  document.getElementById('backupTitle').className = 'text-lg font-semibold text-gray-200 mb-2';
+  document.getElementById('backupStatusText').textContent = 'Starting backup...';
+  document.getElementById('backupProgressBar').style.width = '0%';
+  document.getElementById('backupPercentage').textContent = '0%';
+  document.getElementById('backupSizeInfo').classList.add('hidden');
+  document.getElementById('backupCloseBtn').classList.add('hidden');
+  document.getElementById('backupViewLink').classList.add('hidden');
+  document.getElementById('backupModal').style.display = 'flex';
+
+  pollBackupStatus(backupId, estimatedSize);
+}
+
+function pollBackupStatus(backupId, estimatedSize) {
+  fetch('/backups/status/' + backupId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var progress = 0;
+      var status = data.status;
+      var fileSize = data.file_size_bytes || 0;
+
+      if (status === 'completed' || status === 'uploaded') {
+        progress = 100;
+        onBackupComplete(data, progress);
+        return;
+      } else if (status === 'failed' || status === 'upload_failed') {
+        onBackupFailed(data);
+        return;
+      } else if (status === 'running') {
+        if (estimatedSize && estimatedSize > 0) {
+          progress = Math.min(90, Math.round((fileSize / estimatedSize) * 90));
+        } else {
+          progress = 5;
+        }
+        document.getElementById('backupProgressBar').style.width = progress + '%';
+        document.getElementById('backupPercentage').textContent = progress + '%';
+        document.getElementById('backupStatusText').textContent = 'Creating backup...';
+        if (fileSize > 0) {
+          document.getElementById('backupSizeInfo').classList.remove('hidden');
+          document.getElementById('backupSizeInfo').textContent = formatSize(fileSize) + ' written so far';
+        }
+      }
+
+      backupPollTimer = setTimeout(function() {
+        pollBackupStatus(backupId, estimatedSize);
+      }, 1000);
+    })
+    .catch(function(e) {
+      backupPollTimer = setTimeout(function() {
+        pollBackupStatus(backupId, estimatedSize);
+      }, 2000);
+    });
+}
+
+function onBackupComplete(data, progress) {
+  var btn = document.querySelector('.btn-primary.w-full.justify-center');
+  btn.disabled = false;
+  btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg> Run Backup Now';
+
+  document.getElementById('backupProgressBar').style.width = '100%';
+  document.getElementById('backupPercentage').textContent = '100%';
+
+  document.getElementById('backupProgressIcon').innerHTML = '<svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+  document.getElementById('backupTitle').textContent = 'Backup Complete';
+  document.getElementById('backupTitle').className = 'text-lg font-semibold text-emerald-400 mb-2';
+  document.getElementById('backupStatusText').textContent = 'Backup finished in ' + (data.duration_seconds || 0).toFixed(1) + 's';
+  if (data.file_size_bytes) {
+    document.getElementById('backupSizeInfo').classList.remove('hidden');
+    document.getElementById('backupSizeInfo').textContent = 'Size: ' + formatSize(data.file_size_bytes);
+  }
+  document.getElementById('backupCloseBtn').classList.remove('hidden');
+  document.getElementById('backupViewLink').href = '/backups/' + data.backup_id;
+  document.getElementById('backupViewLink').classList.remove('hidden');
+}
+
+function onBackupFailed(data) {
+  var btn = document.querySelector('.btn-primary.w-full.justify-center');
+  btn.disabled = false;
+  btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg> Run Backup Now';
+
+  document.getElementById('backupProgressIcon').innerHTML = '<svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+  document.getElementById('backupTitle').textContent = 'Backup Failed';
+  document.getElementById('backupTitle').className = 'text-lg font-semibold text-red-400 mb-2';
+  document.getElementById('backupStatusText').textContent = data.error_message || 'Unknown error occurred';
+  document.getElementById('backupSizeInfo').classList.add('hidden');
+  document.getElementById('backupCloseBtn').classList.remove('hidden');
+  document.getElementById('backupViewLink').href = '/backups/' + data.backup_id;
+  document.getElementById('backupViewLink').classList.remove('hidden');
+}
+
+function showBackupError(message) {
+  document.getElementById('backupProgressIcon').innerHTML = '<svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+  document.getElementById('backupTitle').textContent = 'Backup Failed';
+  document.getElementById('backupTitle').className = 'text-lg font-semibold text-red-400 mb-2';
+  document.getElementById('backupStatusText').textContent = message;
+  document.getElementById('backupSizeInfo').classList.add('hidden');
+  document.getElementById('backupCloseBtn').classList.remove('hidden');
+  document.getElementById('backupViewLink').classList.add('hidden');
+  document.getElementById('backupProgressBar').style.width = '0%';
+  document.getElementById('backupPercentage').textContent = '0%';
+  document.getElementById('backupModal').style.display = 'flex';
+}
+
+function closeBackupModal() {
+  document.getElementById('backupModal').style.display = 'none';
+  if (backupPollTimer) {
+    clearTimeout(backupPollTimer);
+    backupPollTimer = null;
+  }
+}
+
 function testConnection(btn, id) {
   btn.disabled = true;
   btn.innerHTML = '<svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg> Testing...';

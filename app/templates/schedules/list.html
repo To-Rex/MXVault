@@ -20,6 +20,7 @@
         <th class="table-header">Name</th>
         <th class="table-header">Connection</th>
         <th class="table-header">Type</th>
+        <th class="table-header">Next Run</th>
         <th class="table-header">Status</th>
         <th class="table-header">Runs</th>
         <th class="table-header">Last Run</th>
@@ -42,6 +43,18 @@
         <td class="table-cell text-gray-400 text-xs">{{ connections.get(s.connection_id, s.connection_id[:12] + '...') }}</td>
         <td class="table-cell"><span class="badge badge-neutral">{{ s.schedule_type | capitalize }}</span></td>
         <td class="table-cell">
+          {% if s.next_run_at and s.is_active and not s.is_paused %}
+          <span class="countdown text-sm font-medium text-indigo-300" data-next-run="{{ s.next_run_at.strftime('%Y-%m-%dT%H:%M:%S') }}"></span>
+          <div class="text-xs text-gray-500">{{ s.next_run_at.strftime('%Y-%m-%d %H:%M') }}</div>
+          {% elif s.is_paused %}
+          <span class="text-sm text-gray-500">Paused</span>
+          {% elif not s.is_active %}
+          <span class="text-sm text-gray-500">Inactive</span>
+          {% else %}
+          <span class="text-sm text-gray-500">—</span>
+          {% endif %}
+        </td>
+        <td class="table-cell">
           {% if s.is_paused %}
           <span class="badge badge-warning"><span class="badge-dot warning"></span>Paused</span>
           {% elif s.is_active %}
@@ -58,6 +71,7 @@
         <td class="table-cell text-gray-500 text-xs">{% if s.last_run_at %}{{ s.last_run_at.strftime('%Y-%m-%d %H:%M') }}{% else %}<span class="text-gray-600">Never</span>{% endif %}</td>
         <td class="table-cell text-right">
           <div class="flex items-center justify-end gap-1.5">
+            <a href="/schedules/{{ s.id }}/edit" class="btn btn-ghost btn-sm">Edit</a>
             {% if s.is_paused %}
             <form method="post" action="/schedules/{{ s.id }}/resume" class="inline">
               <button type="submit" class="btn btn-ghost btn-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10">Resume</button>
@@ -89,4 +103,40 @@
   <a href="/schedules/new" class="btn btn-primary">Create Schedule</a>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateCountdowns() {
+  var now = new Date().getTime();
+  var elements = document.querySelectorAll('.countdown');
+
+  elements.forEach(function(el) {
+    var nextRun = new Date(el.getAttribute('data-next-run')).getTime();
+    var diff = nextRun - now;
+
+    if (diff <= 0) {
+      el.textContent = 'Running...';
+      el.className = 'text-sm font-medium text-emerald-400 animate-pulse';
+      return;
+    }
+
+    var days = Math.floor(diff / 86400000);
+    var hours = Math.floor((diff % 86400000) / 3600000);
+    var minutes = Math.floor((diff % 3600000) / 60000);
+    var seconds = Math.floor((diff % 60000) / 1000);
+
+    var parts = [];
+    if (days > 0) parts.push(days + 'd');
+    if (hours > 0) parts.push(hours + 'h');
+    if (minutes > 0) parts.push(minutes + 'm');
+    parts.push(seconds + 's');
+
+    el.textContent = parts.join(' ');
+  });
+}
+
+updateCountdowns();
+setInterval(updateCountdowns, 1000);
+</script>
 {% endblock %}

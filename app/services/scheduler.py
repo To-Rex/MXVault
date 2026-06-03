@@ -11,12 +11,18 @@ from app.database import SessionLocal
 from app.models.connection import PGConnection
 from app.models.schedule import BackupSchedule
 from app.services.backup import run_backup
-from app.services.notification import notify_backup_completed, notify_backup_failed, notify_backup_started
+from app.services.connection import test_connection
+from app.services.notification import (
+    notify_connection_down,
+    notify_connection_restored,
+)
 
 logger = logging.getLogger("mxvault.scheduler")
 
 scheduler = BackgroundScheduler()
 _scheduled_jobs: dict[str, str] = {}
+_connection_states: dict[str, bool] = {}
+_HEALTH_CHECK_INTERVAL_MINUTES = 5
 
 
 def get_cron_trigger(schedule_type: str) -> str:
@@ -96,10 +102,8 @@ def execute_scheduled_backup(schedule_id: str):
 
         if backup.status == "completed" or backup.status == "uploaded":
             schedule.successful_runs += 1
-            notify_backup_completed(db, backup)
         else:
             schedule.failed_runs += 1
-            notify_backup_failed(db, backup)
 
         db.commit()
     except Exception as e:
@@ -122,10 +126,61 @@ def load_schedules():
         db.close()
 
 
+def check_connections_health():
+    global _connection_states
+
+    db = SessionLocal()
+    try:
+        connections = db.query(PGConnection).all()
+        for conn in connections:
+            result = test_connection(conn)
+            alive = result.get("success", False)
+            conn.last_tested_at = datetime.datetime.now()
+
+            prev_state = _connection_states.get(conn.id)
+
+            if prev_state is None:
+                _connection_states[conn.id] = alive
+            elif alive and not prev_state:
+                logger.info(f"Connection restored: {conn.name}")
+                conn.is_active = True
+                _connection_states[conn.id] = True
+                notify_connection_restored(db, conn.name, conn.host, conn.port, conn.database)
+            elif not alive and prev_state:
+                logger.warning(f"Connection lost: {conn.name}")
+                conn.is_active = False
+                _connection_states[conn.id] = False
+                notify_connection_down(db, conn.name, conn.host, conn.port, conn.database, result.get("message", "Unknown error"))
+            else:
+                conn.is_active = alive
+                _connection_states[conn.id] = alive
+
+        db.commit()
+    except Exception as e:
+        logger.error(f"Connection health check failed: {e}")
+    finally:
+        db.close()
+
+
+def start_connection_health_check():
+    job_id = "connection_health_check"
+    if scheduler.get_job(job_id):
+        return
+    scheduler.add_job(
+        func=check_connections_health,
+        trigger=IntervalTrigger(minutes=_HEALTH_CHECK_INTERVAL_MINUTES),
+        id=job_id,
+        name="Connection Health Check",
+        replace_existing=True,
+    )
+    logger.info(f"Connection health check started (every {_HEALTH_CHECK_INTERVAL_MINUTES} min)")
+
+
 def start_scheduler():
     if not scheduler.running:
         scheduler.start()
         load_schedules()
+        start_connection_health_check()
         logger.info("Scheduler started")
 
 

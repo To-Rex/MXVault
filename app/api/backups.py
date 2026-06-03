@@ -1,17 +1,22 @@
+import datetime
 import json
 import os
+import threading
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.backup import BackupLog
 from app.models.connection import PGConnection
 from app.models.user import User
 from app.services.audit import log_audit
-from app.services.backup import get_backup_logs, run_backup
+from app.services.backup import get_backup_logs, get_database_size_estimate, run_backup_async
+from app.services.notification import notify_backup_started
 from app.templates import templates
 
 router = APIRouter(prefix="/backups", tags=["backups"])
@@ -119,7 +124,7 @@ def delete_backup(backup_id: str, db: Session = Depends(get_db), user: User = De
 def run_backup_route(
     request: Request,
     connection_id: str = Form(...),
-    storage_provider: str = Form("local"),
+    storage_provider: str = Form("local,google_drive,yandex"),
     retention_days: int = Form(30),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -128,18 +133,68 @@ def run_backup_route(
     if not connection:
         raise HTTPException(status_code=404, detail="Connection not found")
 
-    from app.services.notification import notify_backup_started
+    timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")
+    filename = f"{connection.database}_{timestamp}.dump"
+    backup_dir = os.path.join(settings.backup_dir, connection.id)
+    os.makedirs(backup_dir, exist_ok=True)
+    filepath = os.path.join(backup_dir, filename)
 
-    backup = run_backup(db, connection, storage_provider, retention_days)
+    backup_log = BackupLog(
+        id=str(uuid4()),
+        connection_id=connection.id,
+        connection_name=connection.name,
+        database_name=connection.database,
+        filename=filename,
+        status="running",
+        destination=storage_provider,
+        destination_path=filepath,
+        triggered_by="manual",
+    )
+    db.add(backup_log)
+    db.commit()
 
-    if backup.status == "running" or backup.status == "completed":
-        notify_backup_started(db, backup)
+    notify_backup_started(db, backup_log)
 
     log_audit(db, action="backup_run", user_id=user.id, username=user.username,
-              resource_type="backup", resource_id=backup.id,
-              details=f"Backup of '{connection.name}' - status: {backup.status}")
+              resource_type="backup", resource_id=backup_log.id,
+              details=f"Backup of '{connection.name}' - status: started")
 
-    return RedirectResponse(url=f"/backups/{backup.id}", status_code=302)
+    estimated_size = get_database_size_estimate(connection)
+
+    connection.last_backup_at = datetime.datetime.now()
+    db.commit()
+
+    threading.Thread(
+        target=run_backup_async,
+        args=(backup_log.id, connection.id, storage_provider, retention_days),
+        daemon=True,
+    ).start()
+
+    return JSONResponse({
+        "backup_id": backup_log.id,
+        "status": "running",
+        "estimated_size_bytes": estimated_size,
+    })
+
+
+@router.get("/status/{backup_id}")
+def get_backup_status(backup_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    backup = db.query(BackupLog).filter(BackupLog.id == backup_id).first()
+    if not backup:
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    current_size = 0
+    if backup.destination_path and os.path.exists(backup.destination_path):
+        current_size = os.path.getsize(backup.destination_path)
+
+    return {
+        "backup_id": backup.id,
+        "status": backup.status,
+        "file_size_bytes": current_size,
+        "duration_seconds": backup.duration_seconds,
+        "error_message": backup.error_message,
+        "completed_at": backup.completed_at.isoformat() if backup.completed_at else None,
+    }
 
 
 @router.get("/{backup_id}")

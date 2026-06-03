@@ -2,6 +2,7 @@ import datetime
 import os
 import re
 import subprocess
+import threading
 import time
 from uuid import uuid4
 
@@ -10,41 +11,21 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.backup import BackupLog
 from app.models.connection import PGConnection
+from app.services.notification import notify_backup_completed, notify_backup_failed
 from app.utils.crypto import decrypt_password
 
 
-def run_backup(
+def _execute_backup(
     db: Session,
+    backup_log: BackupLog,
     connection: PGConnection,
-    storage_provider: str = "local",
-    retention_days: int = 30,
-    triggered_by: str = "manual",
-    schedule_id: str | None = None,
-) -> BackupLog:
+    storage_provider: str,
+    retention_days: int,
+):
     password = decrypt_password(connection.encrypted_password)
-    timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")
-    filename = f"{connection.database}_{timestamp}.dump"
-    backup_dir = os.path.join(settings.backup_dir, connection.id)
-    os.makedirs(backup_dir, exist_ok=True)
-    filepath = os.path.join(backup_dir, filename)
-
-    backup_log = BackupLog(
-        id=str(uuid4()),
-        connection_id=connection.id,
-        connection_name=connection.name,
-        database_name=connection.database,
-        filename=filename,
-        status="running",
-        destination=storage_provider,
-        destination_path=filepath,
-        triggered_by=triggered_by,
-        schedule_id=schedule_id,
-    )
-    db.add(backup_log)
-    db.commit()
-
     start_time = time.time()
     log_lines = []
+    filepath = backup_log.destination_path
 
     try:
         clean_host = re.sub(r'^https?://', '', connection.host).rstrip('/')
@@ -93,8 +74,9 @@ def run_backup(
             backup_log.completed_at = datetime.datetime.now()
             connection.last_backup_at = datetime.datetime.now()
 
-            if storage_provider != "local":
-                _upload_to_provider(db, backup_log, connection, storage_provider, filepath)
+            providers = [p.strip() for p in storage_provider.split(",") if p.strip() and p.strip() != "local"]
+            for provider in providers:
+                _upload_to_provider(db, backup_log, connection, provider, filepath)
         else:
             error_msg = result.stderr.strip() or "Unknown error"
             log_lines.append(f"Backup failed: {error_msg}")
@@ -107,7 +89,13 @@ def run_backup(
 
         db.commit()
         db.refresh(backup_log)
-        _cleanup_old_backups(db, connection.id, retention_days, backup_dir)
+
+        if backup_log.status in ("completed", "uploaded"):
+            notify_backup_completed(db, backup_log, local_filepath=filepath)
+        else:
+            notify_backup_failed(db, backup_log)
+
+        _cleanup_old_backups(db, connection.id, retention_days, os.path.dirname(filepath))
 
     except Exception as e:
         duration = time.time() - start_time
@@ -117,10 +105,62 @@ def run_backup(
         backup_log.completed_at = datetime.datetime.now()
         backup_log.duration_seconds = round(duration, 2)
         db.commit()
+        notify_backup_failed(db, backup_log)
         if os.path.exists(filepath):
             os.remove(filepath)
 
+
+def run_backup(
+    db: Session,
+    connection: PGConnection,
+    storage_provider: str = "local",
+    retention_days: int = 30,
+    triggered_by: str = "manual",
+    schedule_id: str | None = None,
+) -> BackupLog:
+    password = decrypt_password(connection.encrypted_password)
+    timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")
+    filename = f"{connection.database}_{timestamp}.dump"
+    backup_dir = os.path.join(settings.backup_dir, connection.id)
+    os.makedirs(backup_dir, exist_ok=True)
+    filepath = os.path.join(backup_dir, filename)
+
+    backup_log = BackupLog(
+        id=str(uuid4()),
+        connection_id=connection.id,
+        connection_name=connection.name,
+        database_name=connection.database,
+        filename=filename,
+        status="running",
+        destination=storage_provider,
+        destination_path=filepath,
+        triggered_by=triggered_by,
+        schedule_id=schedule_id,
+    )
+    db.add(backup_log)
+    db.commit()
+
+    _execute_backup(db, backup_log, connection, storage_provider, retention_days)
     return backup_log
+
+
+def run_backup_async(
+    backup_log_id: str,
+    connection_id: str,
+    storage_provider: str,
+    retention_days: int,
+):
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        backup_log = db.query(BackupLog).filter(BackupLog.id == backup_log_id).first()
+        connection = db.query(PGConnection).filter(PGConnection.id == connection_id).first()
+        if not backup_log or not connection:
+            return
+        _execute_backup(db, backup_log, connection, storage_provider, retention_days)
+    finally:
+        db.close()
 
 
 def _upload_to_provider(db: Session, backup_log: BackupLog, connection: PGConnection, provider: str, filepath: str):
@@ -166,6 +206,38 @@ def _cleanup_old_backups(db: Session, connection_id: str, retention_days: int, b
                         os.remove(fpath)
                     except OSError:
                         pass
+
+
+def get_database_size_estimate(connection: PGConnection) -> int | None:
+    password = decrypt_password(connection.encrypted_password)
+    clean_host = re.sub(r'^https?://', '', connection.host).rstrip('/')
+
+    try:
+        env = os.environ.copy()
+        env["PGPASSWORD"] = password
+        if connection.ssl_mode != "disable":
+            env["PGSSLMODE"] = connection.ssl_mode
+
+        result = subprocess.run(
+            [
+                settings.psql_path,
+                "-h", clean_host,
+                "-p", str(connection.port),
+                "-U", connection.username,
+                "-d", connection.database,
+                "-t", "-A",
+                "-c", "SELECT pg_database_size(current_database())",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env=env,
+        )
+        if result.returncode == 0:
+            return int(result.stdout.strip())
+    except Exception:
+        pass
+    return None
 
 
 def get_backup_logs(

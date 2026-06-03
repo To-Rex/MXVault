@@ -36,6 +36,14 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.app_name} v{settings.app_version}")
     init_db()
     start_scheduler()
+
+    db = SessionLocal()
+    try:
+        from app.services.notification import notify_app_started
+        notify_app_started(db, settings.app_version, settings.host, settings.port)
+    finally:
+        db.close()
+
     yield
     shutdown_scheduler()
     logger.info("Application shutdown")

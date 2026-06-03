@@ -1,12 +1,18 @@
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_admin_user, get_current_user
 from app.models.user import User
 from app.services.audit import log_audit
-from app.services.notification import get_telegram_config, save_telegram_config
+from app.services.notification import (
+    delete_email_account,
+    get_email_config,
+    get_telegram_config,
+    save_email_account,
+    save_telegram_config,
+)
 from app.templates import templates
 
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -19,6 +25,14 @@ def settings_page(request: Request, db: Session = Depends(get_db), user: User = 
     from app.models.storage import StorageProvider
 
     telegram_config = get_telegram_config(db)
+    email_config = get_email_config(db)
+    # Decrypt passwords for display
+    from app.utils.crypto import decrypt_password
+    for acc in email_config.get("accounts", []):
+        try:
+            acc["smtp_pass"] = decrypt_password(acc.get("encrypted_pass", ""))
+        except Exception:
+            acc["smtp_pass"] = ""
 
     local_provider = LocalStorageProvider(db)
     local_config = local_provider.get_config()
@@ -45,6 +59,7 @@ def settings_page(request: Request, db: Session = Depends(get_db), user: User = 
         "request": request,
         "user": user,
         "telegram": telegram_config,
+        "email": email_config,
         "local_config": local_config,
         "gdrive_config": gdrive_config,
         "yandex_config": yandex_config,
@@ -62,6 +77,56 @@ def update_telegram(
 ):
     save_telegram_config(db, bot_token, chat_id, enabled)
     log_audit(db, action="settings_telegram_updated", user_id=user.id, username=user.username)
+    return RedirectResponse(url="/settings", status_code=302)
+
+
+@router.post("/email/add")
+def add_email_account(
+    name: str = Form(""),
+    smtp_host: str = Form(""),
+    smtp_port: int = Form(587),
+    smtp_user: str = Form(""),
+    smtp_pass: str = Form(""),
+    from_addr: str = Form(""),
+    to_addresses: str = Form(""),
+    enabled: bool = Form(False),
+    use_tls: bool = Form(True),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    save_email_account(db, None, name, smtp_host, smtp_port, smtp_user, smtp_pass, from_addr, to_addresses, enabled, use_tls)
+    log_audit(db, action="settings_email_added", user_id=user.id, username=user.username)
+    return RedirectResponse(url="/settings", status_code=302)
+
+
+@router.post("/email/update")
+def update_email_account(
+    account_id: str = Form(...),
+    name: str = Form(""),
+    smtp_host: str = Form(""),
+    smtp_port: int = Form(587),
+    smtp_user: str = Form(""),
+    smtp_pass: str = Form(""),
+    from_addr: str = Form(""),
+    to_addresses: str = Form(""),
+    enabled: bool = Form(False),
+    use_tls: bool = Form(True),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    save_email_account(db, account_id, name, smtp_host, smtp_port, smtp_user, smtp_pass, from_addr, to_addresses, enabled, use_tls)
+    log_audit(db, action="settings_email_updated", user_id=user.id, username=user.username)
+    return RedirectResponse(url="/settings", status_code=302)
+
+
+@router.post("/email/delete")
+def delete_email_account_route(
+    account_id: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    delete_email_account(db, account_id)
+    log_audit(db, action="settings_email_deleted", user_id=user.id, username=user.username)
     return RedirectResponse(url="/settings", status_code=302)
 
 
