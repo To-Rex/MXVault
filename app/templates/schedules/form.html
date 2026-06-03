@@ -15,7 +15,8 @@
         <p class="text-xs text-gray-500">{% if schedule %}<span data-i18n="sched_edit_desc">Modify backup schedule settings</span>{% else %}<span data-i18n="sched_new_desc">Create an automated backup schedule</span>{% endif %}</p>
       </div>
     </div>
-    <form method="post" action="{% if schedule %}/schedules/{{ schedule.id }}/edit{% else %}/schedules/new{% endif %}" class="space-y-4">
+    <form method="post" action="{% if schedule %}/schedules/{{ schedule.id }}/edit{% else %}/schedules/new{% endif %}" class="space-y-4" id="schedule_form">
+      <input type="hidden" name="timezone_offset" id="timezone_offset" value="">
       <div>
         <label class="label" data-i18n="sched_name">Schedule Name</label>
         <input type="text" name="name" required class="input" placeholder="Nightly Production Backup" value="{{ schedule.name if schedule else '' }}">
@@ -53,7 +54,7 @@
           </select>
           <span class="text-gray-400 text-sm font-medium">:</span>
           <select name="schedule_minute" class="select" style="max-width:80px">
-            {% for m in range(0, 60, 5) %}
+            {% for m in range(60) %}
             <option value="{{ m }}" {% if schedule_minute is defined and schedule_minute == m %}selected{% endif %}>{{ '%02d' % m }}</option>
             {% endfor %}
           </select>
@@ -97,14 +98,51 @@
   </div>
 </div>
 <script>
+function getTzOffset() { return new Date().getTimezoneOffset(); }
+
+function utcToLocal(utcH, utcM) {
+  var off = getTzOffset();
+  var total = (utcH * 60 + utcM - off) % 1440;
+  if (total < 0) total += 1440;
+  return { h: Math.floor(total / 60), m: total % 60 };
+}
+
+function localToUtc(localH, localM) {
+  var off = getTzOffset();
+  var total = (localH * 60 + localM + off) % 1440;
+  if (total < 0) total += 1440;
+  return { h: Math.floor(total / 60), m: total % 60 };
+}
+
+function populateTimeFields() {
+  var offset = getTzOffset();
+  document.getElementById('timezone_offset').value = offset;
+
+  var hourSel = document.querySelector('select[name="schedule_hour"]');
+  var minSel = document.querySelector('select[name="schedule_minute"]');
+  if (!hourSel || !minSel) return;
+
+  {% if schedule_hour is defined and schedule_minute is defined %}
+  var local = utcToLocal({{ schedule_hour }}, {{ schedule_minute }});
+  hourSel.value = local.h;
+  minSel.value = local.m;
+  {% endif %}
+}
+
+document.getElementById('schedule_form').addEventListener('submit', function() {
+  document.getElementById('timezone_offset').value = getTzOffset();
+});
+
 function toggleFields() {
   var type = document.getElementById('schedule_type').value;
   document.getElementById('interval_field').style.display = type === 'interval' ? 'block' : 'none';
   var showTime = type === 'daily' || type === 'weekly' || type === 'monthly';
   document.getElementById('time_field').style.display = showTime ? 'block' : 'none';
 }
-{% if schedule %}
-document.addEventListener('DOMContentLoaded', function() { toggleFields(); });
-{% endif %}
+
+document.addEventListener('DOMContentLoaded', function() {
+  populateTimeFields();
+  {% if schedule %}toggleFields();{% endif %}
+});
 </script>
 {% endblock %}

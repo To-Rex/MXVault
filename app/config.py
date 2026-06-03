@@ -40,8 +40,6 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8004
 
-    scheduler_timezone: str = ""
-
     rate_limit_enabled: bool = True
     rate_limit_requests: int = 100
     rate_limit_window: int = 60

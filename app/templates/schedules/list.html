@@ -56,7 +56,7 @@
         <td class="table-cell"><span class="badge badge-neutral">{{ s.schedule_type | capitalize }}</span></td>
         <td class="table-cell">
           {% if s.next_run_at and s.is_active and not s.is_paused %}
-          <span class="countdown text-sm font-medium text-indigo-300" data-next-run-ts="{{ (s.next_run_at.timestamp() * 1000) | int }}"></span>
+          <span class="countdown text-sm font-medium text-indigo-300" data-next-run-ts="{{ next_run_ts.get(s.id, 0) }}"></span>
           <div class="text-xs text-gray-500 next-run-local"></div>
           {% elif s.is_paused %}
           <span class="text-sm text-gray-500" data-i18n="status_paused">Paused</span>

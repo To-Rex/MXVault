@@ -24,18 +24,22 @@ def list_schedules(request: Request, db: Session = Depends(get_db), user: User =
     connections = {c.id: c.name for c in db.query(PGConnection).all()}
 
     now = dt.datetime.now()
+    next_run_ts = {}
 
     for s in schedules:
         if s.is_active and not s.is_paused:
             job = scheduler.get_job(f"backup_{s.id}")
             if job and job.next_run_time:
                 s.next_run_at = job.next_run_time
+                next_run_ts[s.id] = int(job.next_run_time.timestamp() * 1000)
             elif not s.next_run_at:
                 if s.schedule_type == "interval" and s.interval_minutes:
                     base = s.last_run_at or s.created_at or now
                     s.next_run_at = base + dt.timedelta(minutes=s.interval_minutes)
                     while s.next_run_at <= now:
                         s.next_run_at += dt.timedelta(minutes=s.interval_minutes)
+        if s.next_run_at:
+            next_run_ts.setdefault(s.id, int(s.next_run_at.timestamp() * 1000))
 
     db.commit()
 
@@ -44,6 +48,7 @@ def list_schedules(request: Request, db: Session = Depends(get_db), user: User =
         "user": user,
         "schedules": schedules,
         "connections": connections,
+        "next_run_ts": next_run_ts,
     })
 
 
@@ -62,6 +67,7 @@ def create_schedule(
     interval_minutes: int = Form(None),
     schedule_hour: int = Form(None),
     schedule_minute: int = Form(None),
+    timezone_offset: int = Form(None),
     cron_expression: str = Form(None),
     retention_days: int = Form(30),
     storage_local: str = Form("local"),
@@ -91,6 +97,13 @@ def create_schedule(
         if schedule_type in ("daily", "weekly", "monthly") and schedule_hour is not None and schedule_minute is not None:
             h = int(schedule_hour)
             m = int(schedule_minute)
+            try:
+                tz_offset = int(timezone_offset or 0)
+                total = (h * 60 + m + tz_offset) % 1440
+                h = total // 60
+                m = total % 60
+            except (ValueError, TypeError):
+                pass
             if schedule_type == "daily":
                 cron_expression = f"{m} {h} * * *"
             elif schedule_type == "weekly":
@@ -166,6 +179,7 @@ def update_schedule(
     interval_minutes: int = Form(None),
     schedule_hour: int = Form(None),
     schedule_minute: int = Form(None),
+    timezone_offset: int = Form(None),
     cron_expression: str = Form(None),
     retention_days: int = Form(30),
     storage_local: str = Form("local"),
@@ -196,6 +210,13 @@ def update_schedule(
         if schedule_type in ("daily", "weekly", "monthly") and schedule_hour is not None and schedule_minute is not None:
             h = int(schedule_hour)
             m = int(schedule_minute)
+            try:
+                tz_offset = int(timezone_offset or 0)
+                total = (h * 60 + m + tz_offset) % 1440
+                h = total // 60
+                m = total % 60
+            except (ValueError, TypeError):
+                pass
             if schedule_type == "daily":
                 cron_expression = f"{m} {h} * * *"
             elif schedule_type == "weekly":
