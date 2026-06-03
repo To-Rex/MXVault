@@ -11,22 +11,22 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-gray-300">Restore from Backup</h3>
-        <p class="text-xs text-gray-500">Select from history, cloud storage, or upload a backup file from your computer.</p>
+        <h3 class="text-sm font-semibold text-gray-300" data-i18n="restore_from">Restore from Backup</h3>
+        <p class="text-xs text-gray-500" data-i18n="restore_desc">Select from history, cloud storage, or upload a backup file from your computer.</p>
       </div>
     </div>
 
     <!-- Source Tabs -->
     <div class="flex gap-1 mb-5 p-1 rounded-xl bg-gray-700/20">
-      <button type="button" @click="source = 'history'" :class="source === 'history' ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-500 hover:text-gray-300'" class="flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200">Backup History</button>
-      <button type="button" @click="source = 'upload'" :class="source === 'upload' ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-500 hover:text-gray-300'" class="flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200">Upload File</button>
+      <button type="button" @click="source = 'history'" :class="source === 'history' ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-500 hover:text-gray-300'" class="flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200" data-i18n="restore_history">Backup History</button>
+      <button type="button" @click="source = 'upload'" :class="source === 'upload' ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-500 hover:text-gray-300'" class="flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200" data-i18n="restore_upload">Upload File</button>
     </div>
 
     <form method="post" action="/restore/run" enctype="multipart/form-data" onsubmit="return confirm('WARNING: This will overwrite the target database. Are you sure you want to proceed?')" class="space-y-5">
       <div x-show="source === 'history'">
-        <label class="label">Select Backup</label>
+        <label class="label" data-i18n="restore_select">Select Backup</label>
         <select name="backup_id" class="select">
-          <option value="">Choose a backup...</option>
+          <option value="" data-i18n="restore_choose_backup">Choose a backup...</option>
           {% for b in backups %}
           <option value="{{ b.id }}">
             [{{ b.created_at.strftime('%Y-%m-%d %H:%M') }}] {{ b.database_name }} — {{ b.filename }} ({{ (b.file_size_bytes / 1048576)|round(2) if b.file_size_bytes else 0 }} MB)
@@ -37,17 +37,17 @@
       </div>
 
       <div x-show="source === 'upload'">
-        <label class="label">Upload Backup File (.dump)</label>
+        <label class="label" data-i18n="restore_upload_label">Upload Backup File (.dump)</label>
         <div class="relative">
           <input type="file" name="upload_file" accept=".dump,.sql,.gz,.tar" class="block w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 file:transition-colors file:cursor-pointer cursor-pointer">
         </div>
-        <p class="text-xs text-gray-500 mt-1">Supports .dump (pg_dump custom format), .sql, .tar, and .gz files.</p>
+        <p class="text-xs text-gray-500 mt-1" data-i18n="restore_upload_support">Supports .dump (pg_dump custom format), .sql, .tar, and .gz files.</p>
       </div>
 
       <div>
-        <label class="label">Target Connection</label>
+        <label class="label" data-i18n="restore_target">Target Connection</label>
         <select name="target_connection_id" required class="select">
-          <option value="">Select target database...</option>
+          <option value="" data-i18n="restore_select_target">Select target database...</option>
           {% for c in connections %}
           <option value="{{ c.id }}">{{ c.name }} ({{ c.host }}/{{ c.database }})</option>
           {% endfor %}
@@ -57,13 +57,13 @@
         <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
         </svg>
-        <p class="text-xs text-red-300"><strong class="text-red-400">Warning:</strong> Restoring will overwrite the target database. Ensure you have a recent backup before proceeding.</p>
+        <p class="text-xs text-red-300"><strong class="text-red-400" data-i18n="restore_warning_title">Warning:</strong> <span data-i18n="restore_warning_text">Restoring will overwrite the target database. Ensure you have a recent backup before proceeding.</span></p>
       </div>
       <button type="submit" class="btn btn-danger">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
-        Start Restore
+        <span data-i18n="restore_start">Start Restore</span>
       </button>
     </form>
   </div>

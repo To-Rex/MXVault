@@ -9,30 +9,30 @@
     <div class="glass-card p-5 stagger-1">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
             <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
             </svg>
           </div>
-          <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Connection Details</h3>
+          <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider" data-i18n="conn_details">Connection Details</h3>
         </div>
         <div class="flex gap-2">
-          <a href="/connections/{{ connection.id }}/edit" class="btn btn-ghost btn-sm">Edit</a>
+          <a href="/connections/{{ connection.id }}/edit" class="btn btn-ghost btn-sm"><span data-i18n="btn_edit">Edit</span></a>
           <form method="post" action="/connections/{{ connection.id }}/delete" onsubmit="return confirm('Delete this connection?')" class="inline">
-            <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+            <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"><span data-i18n="btn_delete">Delete</span></button>
           </form>
         </div>
       </div>
 
       <dl class="grid grid-cols-2 gap-5">
-        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Host</dt><dd class="text-sm text-gray-200 mt-1 font-mono">{{ connection.host }}:{{ connection.port }}</dd></div>
-        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Database</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.database }}</dd></div>
-        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Username</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.username }}</dd></div>
-        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">SSL Mode</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.ssl_mode | upper }}</dd></div>
-        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Status</dt><dd class="mt-1">{% if connection.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}</dd></div>
-        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Last Tested</dt><dd class="text-sm text-gray-400 mt-1">{% if connection.last_tested_at %}{{ connection.last_tested_at.strftime('%b %d, %Y %H:%M') }}{% else %}<span class="text-gray-600">Never</span>{% endif %}</dd></div>
-        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Last Backup</dt><dd class="text-sm text-gray-400 mt-1">{% if connection.last_backup_at %}{{ connection.last_backup_at.strftime('%b %d, %Y %H:%M') }}{% else %}<span class="text-gray-600">Never</span>{% endif %}</dd></div>
-        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Created</dt><dd class="text-sm text-gray-400 mt-1">{{ connection.created_at.strftime('%b %d, %Y') }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider" data-i18n="conn_host">Host</dt><dd class="text-sm text-gray-200 mt-1 font-mono">{{ connection.host }}:{{ connection.port }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider" data-i18n="conn_database">Database</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.database }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider" data-i18n="conn_username">Username</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.username }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider" data-i18n="conn_ssl_mode">SSL Mode</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.ssl_mode | upper }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider" data-i18n="table_status">Status</dt><dd class="mt-1">{% if connection.is_active %}<span class="badge badge-success"><span data-i18n="status_active">Active</span></span>{% else %}<span class="badge badge-danger"><span data-i18n="status_inactive">Inactive</span></span>{% endif %}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider" data-i18n="last_tested">Last Tested</dt><dd class="text-sm text-gray-400 mt-1">{% if connection.last_tested_at %}{{ connection.last_tested_at.strftime('%b %d, %Y %H:%M') }}{% else %}<span class="text-gray-600" data-i18n="never">Never</span>{% endif %}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider" data-i18n="table_last_run">Last Backup</dt><dd class="text-sm text-gray-400 mt-1">{% if connection.last_backup_at %}{{ connection.last_backup_at.strftime('%b %d, %Y %H:%M') }}{% else %}<span class="text-gray-600" data-i18n="never">Never</span>{% endif %}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider" data-i18n="backup_created">Created</dt><dd class="text-sm text-gray-400 mt-1">{{ connection.created_at.strftime('%b %d, %Y') }}</dd></div>
       </dl>
     </div>
   </div>
@@ -40,25 +40,25 @@
   <!-- Quick Actions -->
   <div class="space-y-4 stagger-2">
     <div class="glass-card p-5">
-      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Quick Actions</h3>
+      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4" data-i18n="quick_actions">Quick Actions</h3>
       <div class="space-y-3">
         <button onclick="runBackup('{{ connection.id }}')" class="btn btn-primary w-full justify-center">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
           </svg>
-          Run Backup Now
+          <span data-i18n="backup_run_now">Run Backup Now</span>
         </button>
         <button onclick="testConnection(this, '{{ connection.id }}')" class="btn btn-secondary w-full justify-center">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
           </svg>
-          Test Connection
+          <span data-i18n="conn_test">Test Connection</span>
         </button>
         <a href="/schedules/new" class="btn btn-secondary w-full justify-center">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          Create Schedule
+          <span data-i18n="create_schedule">Create Schedule</span>
         </a>
       </div>
     </div>
@@ -70,7 +70,7 @@
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeTestModal()"></div>
   <div class="relative glass-card p-6 max-w-sm w-full" style="animation: scaleIn 0.3s ease-out;">
     <div id="testResult"></div>
-    <button onclick="closeTestModal()" class="btn btn-secondary w-full mt-4 justify-center">Close</button>
+    <button onclick="closeTestModal()" class="btn btn-secondary w-full mt-4 justify-center"><span data-i18n="btn_close">Close</span></button>
   </div>
 </div>
 
@@ -92,8 +92,8 @@
       <p id="backupPercentage" class="text-xs text-gray-500 mb-1">0%</p>
       <p id="backupSizeInfo" class="text-xs text-gray-500 hidden"></p>
     </div>
-    <button id="backupCloseBtn" onclick="closeBackupModal()" class="btn btn-secondary w-full mt-4 justify-center hidden">Close</button>
-    <a id="backupViewLink" href="#" class="btn btn-primary w-full mt-4 justify-center hidden">View Details</a>
+    <button id="backupCloseBtn" onclick="closeBackupModal()" class="btn btn-secondary w-full mt-4 justify-center hidden"><span data-i18n="btn_close">Close</span></button>
+    <a id="backupViewLink" href="#" class="btn btn-primary w-full mt-4 justify-center hidden"><span data-i18n="backup_view_details">View Details</span></a>
   </div>
 </div>
 {% endblock %}

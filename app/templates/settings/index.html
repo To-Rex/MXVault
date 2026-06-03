@@ -8,7 +8,7 @@
   <div class="glass-card p-1 inline-flex gap-1 stagger-1">
     {% set tabs = [('telegram', 'Telegram'), ('email', 'Email'), ('local', 'Local Storage'), ('gdrive', 'Google Drive'), ('yandex', 'Yandex Disk'), ('users', 'Users')] %}
     {% for key, label in tabs %}
-    <button @click="activeTab = '{{ key }}'" :class="{ 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10': activeTab === '{{ key }}', 'text-gray-500 hover:text-gray-300': activeTab !== '{{ key }}' }" class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200">{{ label }}</button>
+    <button @click="activeTab = '{{ key }}'" :class="{ 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10': activeTab === '{{ key }}', 'text-gray-500 hover:text-gray-300': activeTab !== '{{ key }}' }" class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200" data-i18n="sett_{{ key }}">{{ label }}</button>
     {% endfor %}
   </div>
 
@@ -21,8 +21,8 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-gray-300">Telegram Notifications</h3>
-        <p class="text-xs text-gray-500">Receive backup notifications via Telegram</p>
+        <h3 class="text-sm font-semibold text-gray-300" data-i18n="sett_tg_title">Telegram Notifications</h3>
+        <p class="text-xs text-gray-500" data-i18n="sett_tg_desc">Receive backup notifications via Telegram</p>
       </div>
     </div>
 
@@ -30,12 +30,12 @@
     {% if tg_status == 'success' %}
     <div class="mb-5 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center gap-2">
       <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-      Test message sent successfully! Check your Telegram.
+      <span data-i18n="sett_tg_success">Test message sent successfully! Check your Telegram.</span>
     </div>
     {% elif tg_status == 'error' %}
     <div class="mb-5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300 flex items-center gap-2">
       <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      Failed to send test message. Check Bot Token and Chat ID.
+      <span data-i18n="sett_tg_error">Failed to send test message. Check Bot Token and Chat ID.</span>
     </div>
     {% endif %}
 
@@ -45,44 +45,44 @@
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
         </svg>
-        How to get Bot Token & Chat ID?
+        <span data-i18n="sett_tg_guide">How to get Bot Token & Chat ID?</span>
       </button>
       <div id="telegramGuide" class="hidden mt-3 p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-xs text-gray-400 space-y-3">
         <div>
-          <p class="font-medium text-indigo-300 mb-1">1. Create a Telegram Bot</p>
-          <p>Open Telegram and search for <a href="https://t.me/BotFather" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline">@BotFather</a>. Send <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-indigo-300">/newbot</code> and follow the prompts. Once created, BotFather will give you an <strong class="text-gray-300">HTTP API token</strong> — that's your Bot Token.</p>
+          <p class="font-medium text-indigo-300 mb-1" data-i18n="sett_tg_step1_title">1. Create a Telegram Bot</p>
+          <p data-i18n="sett_tg_step1_desc">Open Telegram and search for <a href="https://t.me/BotFather" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline">@BotFather</a>. Send <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-indigo-300">/newbot</code> and follow the prompts. Once created, BotFather will give you an <strong class="text-gray-300">HTTP API token</strong> — that's your Bot Token.</p>
         </div>
         <div>
-          <p class="font-medium text-indigo-300 mb-1">2. Get Your Chat ID</p>
-          <p>Send a message to your bot on Telegram. Then visit <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-indigo-300">https://api.telegram.org/bot&lt;YOUR_TOKEN&gt;/getUpdates</code> in your browser. Look for <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-indigo-300">"chat":{"id":XXXXXXXX}</code> — that's your Chat ID. You can also use <a href="https://t.me/userinfobot" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline">@userinfobot</a> on Telegram.</p>
+          <p class="font-medium text-indigo-300 mb-1" data-i18n="sett_tg_step2_title">2. Get Your Chat ID</p>
+          <p data-i18n="sett_tg_step2_desc">Send a message to your bot on Telegram. Then visit <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-indigo-300">https://api.telegram.org/bot&lt;YOUR_TOKEN&gt;/getUpdates</code> in your browser. Look for <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-indigo-300">"chat":{"id":XXXXXXXX}</code> — that's your Chat ID. You can also use <a href="https://t.me/userinfobot" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline">@userinfobot</a> on Telegram.</p>
         </div>
-        <p class="text-gray-500 italic">Group Chat IDs start with a minus sign (e.g. <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-indigo-300">-1001234567890</code>). For groups, make sure to add your bot to the group first.</p>
+        <p class="text-gray-500 italic" data-i18n="sett_tg_group_note">Group Chat IDs start with a minus sign (e.g. <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-indigo-300">-1001234567890</code>). For groups, make sure to add your bot to the group first.</p>
       </div>
     </div>
 
     <form method="post" action="/settings/telegram" class="space-y-4" x-data="{ broadcast: {{ 'true' if telegram.get('broadcast', false) else 'false' }} }">
       <div>
-        <label class="label">Bot Token</label>
+        <label class="label" data-i18n="sett_tg_token">Bot Token</label>
         <input type="password" name="bot_token" class="input" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" value="{{ telegram.bot_token or '' }}">
       </div>
       <div>
-        <label class="label">Chat ID</label>
+        <label class="label" data-i18n="sett_tg_chat_id">Chat ID</label>
         <input type="text" name="chat_id" class="input" placeholder="-1001234567890" value="{{ telegram.chat_id or '' }}" :disabled="broadcast">
-        <p class="text-xs text-gray-500 mt-1" x-show="broadcast">Chat ID is disabled — notifications will be sent to all users who started the bot.</p>
+        <p class="text-xs text-gray-500 mt-1" x-show="broadcast" data-i18n="sett_tg_broadcast_note">Chat ID is disabled — notifications will be sent to all users who started the bot.</p>
       </div>
       <label class="flex items-center gap-3 cursor-pointer group">
         <input type="checkbox" name="broadcast" x-model="broadcast" value="true" class="checkbox">
-        <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Send to all users (broadcast)</span>
+        <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_tg_broadcast">Send to all users (broadcast)</span>
       </label>
       <label class="flex items-center gap-3 cursor-pointer group">
         <input type="checkbox" name="enabled" {% if telegram.enabled %}checked{% endif %} value="true" class="checkbox">
-        <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Enable Telegram Notifications</span>
+        <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_tg_enable">Enable Telegram Notifications</span>
       </label>
       <label class="flex items-center gap-3 cursor-pointer group">
         <input type="checkbox" name="send_file" {% if telegram.get('send_file', true) %}checked{% endif %} value="true" class="checkbox">
-        <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Send backup file to Telegram</span>
+        <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_tg_send_file">Send backup file to Telegram</span>
       </label>
-      <button type="submit" class="btn btn-primary">Save Telegram Settings</button>
+      <button type="submit" class="btn btn-primary"><span data-i18n="sett_tg_save">Save Telegram Settings</span></button>
     </form>
   </div>
 
@@ -94,14 +94,14 @@
     <div class="glass-card p-5 max-w-2xl !bg-emerald-500/10 !border-emerald-500/20">
       <div class="flex items-center gap-2 text-xs text-emerald-300">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-        Test email sent successfully! Check your inbox.
+        <span data-i18n="sett_email_success">Test email sent successfully! Check your inbox.</span>
       </div>
     </div>
     {% elif email_status == 'error' %}
     <div class="glass-card p-5 max-w-2xl !bg-red-500/10 !border-red-500/20">
       <div class="flex items-center gap-2 text-xs text-red-300">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        Failed to send test email. Check SMTP settings and App Password.
+        <span data-i18n="sett_email_error">Failed to send test email. Check SMTP settings and App Password.</span>
       </div>
     </div>
     {% endif %}
@@ -112,11 +112,11 @@
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
         </svg>
-        How to set up SMTP / App Password?
+        <span data-i18n="sett_email_guide">How to set up SMTP / App Password?</span>
       </button>
       <div id="emailGuide" class="hidden mt-3 p-4 rounded-xl bg-rose-500/5 border border-rose-500/10 text-xs text-gray-400 space-y-3">
         <div>
-          <p class="font-medium text-rose-300 mb-1">Gmail</p>
+          <p class="font-medium text-rose-300 mb-1" data-i18n="sett_email_gmail_title">Gmail</p>
           <ol class="list-decimal list-inside space-y-1 ml-1">
             <li>Go to <a href="https://myaccount.google.com/security" target="_blank" class="text-rose-400 hover:text-rose-300 underline">Google Account Security</a> and enable <strong class="text-gray-300">2-Step Verification</strong>.</li>
             <li>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" class="text-rose-400 hover:text-rose-300 underline">App Passwords</a>, select "Mail" and your device, then click "Generate".</li>
@@ -125,21 +125,21 @@
           </ol>
         </div>
         <div>
-          <p class="font-medium text-rose-300 mb-1">Outlook / Hotmail</p>
+          <p class="font-medium text-rose-300 mb-1" data-i18n="sett_email_outlook_title">Outlook / Hotmail</p>
           <ol class="list-decimal list-inside space-y-1 ml-1">
             <li>SMTP Host: <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-rose-300">smtp-mail.outlook.com</code>, Port: <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-rose-300">587</code>, TLS: ON</li>
             <li>App Password: Go to <a href="https://account.microsoft.com/security" target="_blank" class="text-rose-400 hover:text-rose-300 underline">Microsoft Security</a> → "Security" → "Advanced security options" → "App passwords".</li>
           </ol>
         </div>
         <div>
-          <p class="font-medium text-rose-300 mb-1">Yandex Mail</p>
+          <p class="font-medium text-rose-300 mb-1" data-i18n="sett_email_yandex_title">Yandex Mail</p>
           <ol class="list-decimal list-inside space-y-1 ml-1">
             <li>SMTP Host: <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-rose-300">smtp.yandex.com</code>, Port: <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-rose-300">587</code>, TLS: ON</li>
             <li>App Password: Go to <a href="https://id.yandex.ru/security/app-passwords" target="_blank" class="text-rose-400 hover:text-rose-300 underline">Yandex App Passwords</a>, create a new password for "Mail".</li>
           </ol>
         </div>
         <div>
-          <p class="font-medium text-rose-300 mb-1">Other Providers</p>
+          <p class="font-medium text-rose-300 mb-1" data-i18n="sett_email_other_title">Other Providers</p>
           <p>Use the SMTP host/port provided by your email service. Most providers require an <strong class="text-gray-300">App Password</strong> (not your regular login password). Check your provider's documentation for SMTP settings.</p>
         </div>
       </div>
@@ -157,14 +157,14 @@
           <div>
             <h3 class="text-sm font-semibold text-gray-300">{{ acc.name }}</h3>
             <p class="text-xs text-gray-500">{{ acc.smtp_host }}:{{ acc.smtp_port }} — {{ acc.smtp_user }}</p>
-            <p class="text-xs text-gray-500">To: {{ acc.to_addresses | join(', ') }} {% if acc.enabled %}<span class="badge badge-success ml-1">Active</span>{% else %}<span class="badge badge-neutral ml-1">Disabled</span>{% endif %}</p>
+            <p class="text-xs text-gray-500">To: {{ acc.to_addresses | join(', ') }} {% if acc.enabled %}<span class="badge badge-success ml-1" data-i18n="sett_email_active">Active</span>{% else %}<span class="badge badge-neutral ml-1" data-i18n="sett_email_disabled">Disabled</span>{% endif %}</p>
           </div>
         </div>
         <div class="flex gap-2">
-          <button type="button" onclick="document.getElementById('editForm{{ acc.id }}').classList.toggle('hidden')" class="btn btn-ghost btn-sm">Edit</button>
+          <button type="button" onclick="document.getElementById('editForm{{ acc.id }}').classList.toggle('hidden')" class="btn btn-ghost btn-sm"><span data-i18n="btn_edit">Edit</span></button>
           <form method="post" action="/settings/email/delete" onsubmit="return confirm('Delete this email account?')" class="inline">
             <input type="hidden" name="account_id" value="{{ acc.id }}">
-            <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+            <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"><span data-i18n="btn_delete">Delete</span></button>
           </form>
         </div>
       </div>
@@ -172,52 +172,52 @@
         <form method="post" action="/settings/email/update" class="space-y-4">
           <input type="hidden" name="account_id" value="{{ acc.id }}">
           <div>
-            <label class="label">Account Name</label>
+             <label class="label" data-i18n="sett_email_account_name">Account Name</label>
             <input type="text" name="name" class="input" value="{{ acc.name or '' }}">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="label">SMTP Host</label>
+              <label class="label" data-i18n="sett_email_smtp_host">SMTP Host</label>
               <input type="text" name="smtp_host" class="input" value="{{ acc.smtp_host or '' }}">
             </div>
             <div>
-              <label class="label">SMTP Port</label>
+              <label class="label" data-i18n="sett_email_smtp_port">SMTP Port</label>
               <input type="number" name="smtp_port" class="input" value="{{ acc.smtp_port or 587 }}">
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="label">Username / Email</label>
+              <label class="label" data-i18n="sett_email_username">Username / Email</label>
               <input type="text" name="smtp_user" class="input" value="{{ acc.smtp_user or '' }}">
             </div>
             <div>
-              <label class="label">App Password (leave empty to keep)</label>
+              <label class="label" data-i18n="sett_email_app_password">App Password (leave empty to keep)</label>
               <input type="password" name="smtp_pass" class="input" placeholder="Leave empty to keep current">
             </div>
           </div>
           <div>
-            <label class="label">From Address</label>
+            <label class="label" data-i18n="sett_email_from_addr">From Address</label>
             <input type="email" name="from_addr" class="input" value="{{ acc.from_addr or '' }}">
           </div>
           <div>
-            <label class="label">To Addresses (one per line or comma-separated)</label>
+            <label class="label" data-i18n="sett_email_to_addr">To Addresses (one per line or comma-separated)</label>
             <textarea name="to_addresses" class="input" rows="3">{{ acc.to_addresses | join('\n') }}</textarea>
           </div>
           <div class="flex items-center gap-6">
             <label class="flex items-center gap-3 cursor-pointer group">
               <input type="checkbox" name="enabled" {% if acc.enabled %}checked{% endif %} value="true" class="checkbox">
-              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Enabled</span>
+              <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_email_enabled">Enabled</span>
             </label>
             <label class="flex items-center gap-3 cursor-pointer group">
               <input type="checkbox" name="use_tls" {% if acc.use_tls %}checked{% endif %} value="true" class="checkbox">
-              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Use TLS</span>
+              <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_email_use_tls">Use TLS</span>
             </label>
             <label class="flex items-center gap-3 cursor-pointer group">
               <input type="checkbox" name="send_file" {% if acc.get('send_file', true) %}checked{% endif %} value="true" class="checkbox">
-              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Send backup file as attachment</span>
+              <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_email_send_file">Send backup file as attachment</span>
             </label>
           </div>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="submit" class="btn btn-primary"><span data-i18n="sett_email_save_changes">Save Changes</span></button>
         </form>
       </div>
     </div>
@@ -232,8 +232,8 @@
           </svg>
         </div>
         <div>
-          <h3 class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Add Email Account</h3>
-          <p class="text-xs text-gray-500">Add another SMTP sender and its recipients</p>
+          <h3 class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_email_add">Add Email Account</h3>
+          <p class="text-xs text-gray-500" data-i18n="sett_email_add_desc">Add another SMTP sender and its recipients</p>
         </div>
         <svg class="w-4 h-4 text-gray-500 ml-auto group-hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -248,47 +248,47 @@
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="label">SMTP Host</label>
+            <label class="label" data-i18n="sett_email_smtp_host">SMTP Host</label>
             <input type="text" name="smtp_host" class="input" placeholder="smtp.gmail.com">
           </div>
           <div>
-            <label class="label">SMTP Port</label>
+            <label class="label" data-i18n="sett_email_smtp_port">SMTP Port</label>
             <input type="number" name="smtp_port" class="input" value="587">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="label">Username / Email</label>
+            <label class="label" data-i18n="sett_email_username">Username / Email</label>
             <input type="text" name="smtp_user" class="input" placeholder="your@email.com">
           </div>
           <div>
-            <label class="label">App Password</label>
+            <label class="label" data-i18n="sett_email_app_password_label">App Password</label>
             <input type="password" name="smtp_pass" class="input" placeholder="Gmail App Password">
           </div>
         </div>
         <div>
-          <label class="label">From Address</label>
+          <label class="label" data-i18n="sett_email_from_addr">From Address</label>
           <input type="email" name="from_addr" class="input" placeholder="mxvault@example.com">
         </div>
         <div>
-          <label class="label">To Addresses (one per line or comma-separated)</label>
+          <label class="label" data-i18n="sett_email_to_addr">To Addresses (one per line or comma-separated)</label>
           <textarea name="to_addresses" class="input" rows="2" placeholder="admin@example.com&#10;dev@example.com"></textarea>
         </div>
         <div class="flex items-center gap-6">
           <label class="flex items-center gap-3 cursor-pointer group">
             <input type="checkbox" name="enabled" checked value="true" class="checkbox">
-            <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Enabled</span>
+            <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_email_enabled">Enabled</span>
           </label>
           <label class="flex items-center gap-3 cursor-pointer group">
             <input type="checkbox" name="use_tls" checked value="true" class="checkbox">
-            <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Use TLS</span>
+            <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_email_use_tls">Use TLS</span>
           </label>
           <label class="flex items-center gap-3 cursor-pointer group">
             <input type="checkbox" name="send_file" checked value="true" class="checkbox">
-            <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Send backup file as attachment</span>
+            <span class="text-sm text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_email_send_file">Send backup file as attachment</span>
           </label>
         </div>
-        <button type="submit" class="btn btn-primary">Add Email Account</button>
+        <button type="submit" class="btn btn-primary"><span data-i18n="sett_email_add_btn">Add Email Account</span></button>
       </form>
       </div>
     </div>
@@ -302,8 +302,8 @@
           </svg>
         </div>
         <div>
-          <h3 class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Email Template</h3>
-          <p class="text-xs text-gray-500">Customize the HTML email design for notifications</p>
+          <h3 class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors" data-i18n="sett_email_template">Email Template</h3>
+          <p class="text-xs text-gray-500" data-i18n="sett_email_template_desc">Customize the HTML email design for notifications</p>
         </div>
         <svg class="w-4 h-4 text-gray-500 ml-auto group-hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -315,15 +315,15 @@
         {% if tpl_status == 'success' %}
         <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center gap-2">
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          Email template saved.
+          <span data-i18n="sett_email_template_saved">Email template saved.</span>
         </div>
         {% endif %}
         <p class="text-xs text-gray-500 mb-3">Use <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-violet-300">{{ "{{ app_name }}" }}</code>, <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-violet-300">{{ "{{ title }}" }}</code>, <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-violet-300">{{ "{{ body }}" }}</code>, <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-violet-300">{{ "{{ timestamp }}" }}</code> as placeholders.</p>
         <form method="post" action="/settings/email/template" class="space-y-4">
           <textarea name="template" class="input font-mono text-xs" rows="18" style="resize:vertical;">{{ email_template | safe }}</textarea>
           <div class="flex gap-3">
-            <button type="submit" class="btn btn-primary">Save Template</button>
-            <button type="button" onclick="this.form.elements.template.value = document.getElementById('defaultEmailTemplate').textContent" class="btn btn-ghost btn-sm">Reset to Default</button>
+            <button type="submit" class="btn btn-primary"><span data-i18n="sett_email_template_save">Save Template</span></button>
+            <button type="button" onclick="this.form.elements.template.value = document.getElementById('defaultEmailTemplate').textContent" class="btn btn-ghost btn-sm"><span data-i18n="sett_email_template_reset">Reset to Default</span></button>
           </div>
         </form>
         <script id="defaultEmailTemplate" type="text/plain" class="hidden">{{ default_template | safe }}</script>
@@ -341,20 +341,20 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-gray-300">Local Storage Settings</h3>
-        <p class="text-xs text-gray-500">Configure local backup storage path and retention</p>
+        <h3 class="text-sm font-semibold text-gray-300" data-i18n="sett_local_title">Local Storage Settings</h3>
+        <p class="text-xs text-gray-500" data-i18n="sett_local_desc">Configure local backup storage path and retention</p>
       </div>
     </div>
     <form method="post" action="/settings/local-storage" class="space-y-4">
       <div>
-        <label class="label">Backup Directory</label>
+        <label class="label" data-i18n="sett_local_dir">Backup Directory</label>
         <input type="text" name="backup_dir" class="input" value="{{ local_config.backup_dir }}">
       </div>
       <div>
-        <label class="label">Retention (days)</label>
+        <label class="label" data-i18n="sett_local_retention">Retention (days)</label>
         <input type="number" name="retention_days" class="input" value="{{ local_config.retention_days or 30 }}" min="1">
       </div>
-      <button type="submit" class="btn btn-primary">Save Local Storage Settings</button>
+      <button type="submit" class="btn btn-primary"><span data-i18n="sett_local_save">Save Local Storage Settings</span></button>
     </form>
   </div>
 
@@ -367,24 +367,24 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-gray-300">Google Drive Integration</h3>
-        <p class="text-xs text-gray-500">Store backups in Google Drive</p>
+        <h3 class="text-sm font-semibold text-gray-300" data-i18n="sett_gdrive_title">Google Drive Integration</h3>
+        <p class="text-xs text-gray-500" data-i18n="sett_gdrive_desc">Store backups in Google Drive</p>
       </div>
     </div>
     <form method="post" action="/settings/google-drive" class="space-y-4">
       <div>
-        <label class="label">Access Token</label>
+        <label class="label" data-i18n="sett_gdrive_access_token">Access Token</label>
         <input type="password" name="access_token" class="input" value="{{ gdrive_config.get('access_token', '') }}">
       </div>
       <div>
-        <label class="label">Refresh Token</label>
+        <label class="label" data-i18n="sett_gdrive_refresh_token">Refresh Token</label>
         <input type="password" name="refresh_token" class="input" value="{{ gdrive_config.get('refresh_token', '') }}">
       </div>
       <div>
-        <label class="label">Folder ID</label>
+        <label class="label" data-i18n="sett_gdrive_folder_id">Folder ID</label>
         <input type="text" name="folder_id" class="input" placeholder="root" value="{{ gdrive_config.get('folder_id', 'root') }}">
       </div>
-      <button type="submit" class="btn btn-primary">Save Google Drive Settings</button>
+      <button type="submit" class="btn btn-primary"><span data-i18n="sett_gdrive_save">Save Google Drive Settings</span></button>
     </form>
   </div>
 
@@ -397,8 +397,8 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-gray-300">Yandex Disk Integration</h3>
-        <p class="text-xs text-gray-500">Store backups in Yandex Disk</p>
+        <h3 class="text-sm font-semibold text-gray-300" data-i18n="sett_yandex_title">Yandex Disk Integration</h3>
+        <p class="text-xs text-gray-500" data-i18n="sett_yandex_desc">Store backups in Yandex Disk</p>
       </div>
     </div>
 
@@ -408,7 +408,7 @@
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
         </svg>
-        How to get Yandex Disk OAuth Token?
+        <span data-i18n="sett_yandex_guide">How to get Yandex Disk OAuth Token?</span>
       </button>
       <div id="yandexGuide" class="hidden mt-3 p-4 rounded-xl bg-red-500/5 border border-red-500/10 text-xs text-gray-400 space-y-3">
         <div>
@@ -427,14 +427,14 @@
 
     <form method="post" action="/settings/yandex" class="space-y-4">
       <div>
-        <label class="label">OAuth Token</label>
+        <label class="label" data-i18n="sett_yandex_token">OAuth Token</label>
         <input type="password" name="access_token" class="input" value="{{ yandex_config.get('access_token', '') }}">
       </div>
       <div>
-        <label class="label">Folder Name</label>
+        <label class="label" data-i18n="sett_yandex_folder">Folder Name</label>
         <input type="text" name="folder" class="input" placeholder="mxvault-backups" value="{{ yandex_config.get('folder', 'mxvault-backups') }}">
       </div>
-      <button type="submit" class="btn btn-primary">Save Yandex Disk Settings</button>
+      <button type="submit" class="btn btn-primary"><span data-i18n="sett_yandex_save">Save Yandex Disk Settings</span></button>
     </form>
   </div>
 
@@ -448,8 +448,8 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-gray-300">User Management</h3>
-        <p class="text-xs text-gray-500">Manage system users</p>
+        <h3 class="text-sm font-semibold text-gray-300" data-i18n="sett_users_title">User Management</h3>
+        <p class="text-xs text-gray-500" data-i18n="sett_users_desc">Manage system users</p>
       </div>
     </div>
     {% if users %}
@@ -457,22 +457,22 @@
       {% for u in users %}
       <div class="flex items-center justify-between p-3 rounded-xl bg-gray-700/20 hover:bg-gray-700/30 transition-all duration-200 stagger-{{ loop.index }}">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center text-xs font-bold text-indigo-400">{{ (u.display_name or u.username)[:2].upper() }}</div>
+          <div class="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-400">{{ (u.display_name or u.username)[:2].upper() }}</div>
           <div>
             <p class="text-sm font-medium text-gray-200">{{ u.display_name or u.username }}</p>
             <p class="text-xs text-gray-500">{{ u.email }}</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          {% if u.is_admin %}<span class="badge badge-info ">Admin</span>{% endif %}
-          <span class="{% if u.is_active %}badge badge-success{% else %}badge badge-danger{% endif %}">{% if u.is_active %}Active{% else %}Inactive{% endif %}</span>
+          {% if u.is_admin %}<span class="badge badge-info" data-i18n="sett_users_admin">Admin</span>{% endif %}
+          <span class="{% if u.is_active %}badge badge-success{% else %}badge badge-danger{% endif %}">{% if u.is_active %}<span data-i18n="sett_users_active">Active</span>{% else %}<span data-i18n="sett_users_inactive">Inactive</span>{% endif %}</span>
         </div>
       </div>
       {% endfor %}
     </div>
     {% else %}
     <div class="empty-state">
-      <p class="text-gray-500 text-sm">No users found.</p>
+      <p class="text-gray-500 text-sm" data-i18n="sett_users_no_users">No users found.</p>
     </div>
     {% endif %}
   </div>

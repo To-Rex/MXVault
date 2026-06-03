@@ -12,8 +12,8 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-lg font-semibold text-emerald-400">Restore Completed Successfully</h3>
-        <p class="text-sm text-gray-400">Duration: {{ duration }} seconds</p>
+        <h3 class="text-lg font-semibold text-emerald-400" data-i18n="restore_success">Restore Completed Successfully</h3>
+        <p class="text-sm text-gray-400"><span data-i18n="restore_duration">Duration:</span> {{ duration }} seconds</p>
       </div>
       {% else %}
       <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center shadow-lg shadow-red-500/10">
@@ -22,7 +22,7 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-lg font-semibold text-red-400">Restore Failed</h3>
+        <h3 class="text-lg font-semibold text-red-400" data-i18n="restore_failed">Restore Failed</h3>
         {% if error %}<p class="text-sm text-red-300">{{ error }}</p>{% endif %}
       </div>
       {% endif %}
@@ -41,8 +41,8 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <a href="/restore" class="btn btn-secondary">Back to Restore</a>
-      <a href="/backups" class="btn btn-secondary">View Backups</a>
+      <a href="/restore" class="btn btn-secondary"><span data-i18n="restore_back">Back to Restore</span></a>
+      <a href="/backups" class="btn btn-secondary"><span data-i18n="restore_view_backups">View Backups</span></a>
     </div>
   </div>
 </div>

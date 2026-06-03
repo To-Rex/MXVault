@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/i18n.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
     .sidebar-scroll::-webkit-scrollbar { width: 3px; }
@@ -35,34 +36,34 @@
 
       <!-- Logo -->
       <div class="flex items-center gap-3 px-5 h-16 border-b border-gray-700/20">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600
+        <div class="w-9 h-9 rounded-xl bg-indigo-600
                     flex items-center justify-center text-white font-bold text-sm
                     shadow-lg shadow-indigo-500/20 animate-float">
           M
         </div>
-        <span class="text-lg font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">MXVault</span>
+        <span class="text-lg font-bold text-white">MXVault</span>
       </div>
 
       <!-- Navigation -->
       <nav class="p-3 space-y-0.5 mt-2">
         {% set nav_items = [
-          ('/dashboard', 'Dashboard', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'),
-          ('/connections', 'Connections', 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4'),
-          ('/backups', 'Backups', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'),
-          ('/schedules', 'Schedules', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
-          ('/storage/local', 'Storage', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'),
-          ('/restore', 'Restore', 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'),
-          ('/inspect', 'Inspect', 'M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'),
-          ('/settings', 'Settings', 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z'),
+          ('/dashboard', 'Dashboard', 'nav_dashboard', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'),
+          ('/connections', 'Connections', 'nav_connections', 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4'),
+          ('/backups', 'Backups', 'nav_backups', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'),
+          ('/schedules', 'Schedules', 'nav_schedules', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
+          ('/storage/local', 'Storage', 'nav_storage', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'),
+          ('/restore', 'Restore', 'nav_restore', 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'),
+          ('/inspect', 'Inspect', 'nav_inspect', 'M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'),
+          ('/settings', 'Settings', 'nav_settings', 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z'),
         ] %}
-        {% for href, label, icon_path in nav_items %}
+        {% for href, label, i18n_key, icon_path in nav_items %}
         <a href="{{ href }}"
            class="sidebar-link group"
            :class="{ 'active': window.location.pathname.startsWith('{{ href.split('?')[0] }}') || (window.location.pathname === '/' && '{{ href }}' === '/dashboard') }">
           <svg class="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ icon_path }}"/>
           </svg>
-          <span>{{ label }}</span>
+          <span data-i18n="{{ i18n_key }}">{{ label }}</span>
         </a>
         {% endfor %}
       </nav>
@@ -70,7 +71,7 @@
       <!-- User Footer -->
       <div class="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-700/20 bg-gray-800/60 backdrop-blur-xl">
         <a href="/auth/profile" class="sidebar-link group">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20
+          <div class="w-8 h-8 rounded-xl bg-indigo-500/20
                       flex items-center justify-center text-xs font-bold text-indigo-400
                       transition-transform duration-200 group-hover:scale-110">
             {{ user.username[:2].upper() }}
@@ -85,7 +86,7 @@
             <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
             </svg>
-            <span>Logout</span>
+            <span data-i18n="nav_logout">Logout</span>
           </button>
         </form>
       </div>
@@ -122,6 +123,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
             </svg>
           </button>
+          <div class="flex items-center gap-0.5 rounded-lg border border-gray-700/30 bg-gray-800/50 p-0.5 ml-1" x-data="langData" x-init="init()">
+            <button @click="setLang('uz')" :class="lang === 'uz' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300'" class="rounded-md px-2 py-0.5 text-xs font-medium transition-colors">UZ</button>
+            <button @click="setLang('ru')" :class="lang === 'ru' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300'" class="rounded-md px-2 py-0.5 text-xs font-medium transition-colors">RU</button>
+            <button @click="setLang('en')" :class="lang === 'en' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300'" class="rounded-md px-2 py-0.5 text-xs font-medium transition-colors">EN</button>
+          </div>
         </div>
       </header>
 

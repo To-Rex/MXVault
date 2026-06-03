@@ -5,20 +5,20 @@
 
 <!-- Stats Grid -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-  {% set stats_data = [
-    ('Databases', stats.total_databases, 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', 'blue', '#3b82f6'),
-    ('Total Backups', stats.total_backups, 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4', 'emerald', '#10b981'),
-    ('Successful', stats.successful_backups, 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 'green', '#34d399'),
-    ('Failed', stats.failed_backups, 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'red', '#f87171'),
-    ('Running', stats.running_backups, 'M13 10V3L4 14h7v7l9-11h-7z', 'amber', '#fbbf24'),
-    ('Storage', (stats.storage_usage_gb|string + ' GB') if stats.storage_usage_gb >= 1 else (stats.storage_usage_mb|string + ' MB'), 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4', 'purple', '#a855f7'),
-    ('Last Backup', stats.last_backup_name or '—', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'indigo', '#818cf8'),
-    ('Next Schedule', stats.next_schedule_name or '—', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'cyan', '#22d3ee'),
+  {% set stats = [
+    ('stat_databases', stats.total_databases, 'Databases', 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', '#3b82f6'),
+    ('stat_total_backups', stats.total_backups, 'Total Backups', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4', '#10b981'),
+    ('stat_successful', stats.successful_backups, 'Successful', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', '#34d399'),
+    ('stat_failed', stats.failed_backups, 'Failed', 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', '#f87171'),
+    ('stat_running', stats.running_backups, 'Running', 'M13 10V3L4 14h7v7l9-11h-7z', '#fbbf24'),
+    ('stat_storage_dash', (stats.storage_usage_gb|string + ' GB') if stats.storage_usage_gb >= 1 else (stats.storage_usage_mb|string + ' MB'), 'Storage', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4', '#a855f7'),
+    ('stat_last_backup', stats.last_backup_name or '—', 'Last Backup', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', '#818cf8'),
+    ('stat_next_schedule', stats.next_schedule_name or '—', 'Next Schedule', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', '#22d3ee'),
   ] %}
-  {% for label, value, icon, color, hex in stats_data %}
+  {% for i18n_key, value, en_label, icon, hex in stats %}
   <div class="stat-card stagger-{{ loop.index }}">
     <div class="flex items-center justify-between mb-1">
-      <span class="stat-label" style="color: {{ hex }}80;">{{ label }}</span>
+      <span class="stat-label" style="color: {{ hex }}80;" data-i18n="{{ i18n_key }}">{{ en_label }}</span>
       <div class="stat-icon" style="background: {{ hex }}12; color: {{ hex }};">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ icon }}"/>
@@ -36,9 +36,9 @@
   <!-- Recent Backups -->
   <div class="glass-card p-5 stagger-6">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Recent Backups</h3>
+      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider" data-i18n="dash_recent_backups">Recent Backups</h3>
       {% if recent_backups %}
-      <a href="/backups" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">View all →</a>
+      <a href="/backups" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"><span data-i18n="dash_view_all">View all →</span></a>
       {% endif %}
     </div>
     {% if recent_backups %}
@@ -46,10 +46,10 @@
       <table class="w-full">
         <thead>
           <tr class="border-b border-gray-700/20">
-            <th class="table-header">Database</th>
-            <th class="table-header">Status</th>
-            <th class="table-header">Size</th>
-            <th class="table-header">Time</th>
+            <th class="table-header" data-i18n="table_database">Database</th>
+            <th class="table-header" data-i18n="table_status">Status</th>
+            <th class="table-header" data-i18n="table_size">Size</th>
+            <th class="table-header" data-i18n="table_time">Time</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-700/10">
@@ -61,11 +61,11 @@
             <td class="table-cell">
               {% set status = b.status %}
               {% if status in ('completed', 'uploaded') %}
-              <span class="badge badge-success"><span class="badge-dot success"></span>Success</span>
+              <span class="badge badge-success"><span class="badge-dot success"></span><span data-i18n="status_success">Success</span></span>
               {% elif status == 'failed' %}
-              <span class="badge badge-danger"><span class="badge-dot danger"></span>Failed</span>
+              <span class="badge badge-danger"><span class="badge-dot danger"></span><span data-i18n="status_failed_label">Failed</span></span>
               {% elif status == 'running' %}
-              <span class="badge badge-warning"><span class="animate-pulse" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#fbbf24;margin-right:4px;box-shadow:0 0 6px rgba(251,191,36,0.5);"></span>Running</span>
+              <span class="badge badge-warning"><span class="animate-pulse" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#fbbf24;margin-right:4px;box-shadow:0 0 6px rgba(251,191,36,0.5);"></span><span data-i18n="status_running_label">Running</span></span>
               {% else %}
               <span class="badge badge-neutral">{{ status | capitalize }}</span>
               {% endif %}
@@ -73,7 +73,7 @@
             <td class="table-cell text-gray-300 text-sm">
               {% if b.file_size_bytes %}
               <span class="font-medium">{{ (b.file_size_bytes / 1048576)|round(1) }}</span>
-              <span class="text-gray-500">MB</span>
+              <span class="text-gray-500" data-i18n="unit_mb">MB</span>
               {% else %}—{% endif %}
             </td>
             <td class="table-cell text-gray-500 text-xs">{{ b.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
@@ -89,8 +89,8 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
         </svg>
       </div>
-      <p class="text-gray-500 text-sm">No backups yet.</p>
-      <a href="/connections" class="btn btn-primary btn-sm mt-3">Add Connection</a>
+      <p class="text-gray-500 text-sm" data-i18n="no_backups">No backups yet.</p>
+      <a href="/connections" class="btn btn-primary btn-sm mt-3"><span data-i18n="add_connection">Add Connection</span></a>
     </div>
     {% endif %}
   </div>
@@ -98,9 +98,9 @@
   <!-- Active Schedules -->
   <div class="glass-card p-5 stagger-7">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Active Schedules</h3>
+      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider" data-i18n="dash_active_schedules">Active Schedules</h3>
       {% if schedules %}
-      <a href="/schedules" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">View all →</a>
+      <a href="/schedules" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"><span data-i18n="dash_view_all">View all →</span></a>
       {% endif %}
     </div>
     {% if schedules %}
@@ -115,7 +115,8 @@
           </div>
           <div>
             <p class="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">{{ s.name }}</p>
-            <p class="text-xs text-gray-500">{{ s.schedule_type | capitalize }} • {{ s.total_runs }} runs</p>
+            {% set sched_map = {'interval': 'sched_types_interval', 'hourly': 'sched_types_hourly', 'daily': 'sched_types_daily', 'weekly': 'sched_types_weekly', 'monthly': 'sched_types_monthly'} %}
+            <p class="text-xs text-gray-500"><span data-i18n="{{ sched_map.get(s.schedule_type, '') }}">{{ s.schedule_type | capitalize }}</span> • {{ s.total_runs }} <span data-i18n="runs_count">runs</span></p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -132,8 +133,8 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
       </div>
-      <p class="text-gray-500 text-sm">No schedules configured.</p>
-      <a href="/schedules/new" class="btn btn-primary btn-sm mt-3">Create Schedule</a>
+      <p class="text-gray-500 text-sm" data-i18n="no_schedules">No schedules configured.</p>
+      <a href="/schedules/new" class="btn btn-primary btn-sm mt-3"><span data-i18n="create_schedule">Create Schedule</span></a>
     </div>
     {% endif %}
   </div>

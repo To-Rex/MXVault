@@ -8,7 +8,7 @@
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
     </svg>
-    New Schedule
+    <span data-i18n="sched_new">New Schedule</span>
   </a>
 </div>
 
@@ -17,14 +17,14 @@
   <table class="w-full">
     <thead>
       <tr>
-        <th class="table-header">Name</th>
-        <th class="table-header">Connection</th>
-        <th class="table-header">Type</th>
-        <th class="table-header">Next Run</th>
-        <th class="table-header">Status</th>
-        <th class="table-header">Runs</th>
-        <th class="table-header">Last Run</th>
-        <th class="table-header text-right">Actions</th>
+        <th class="table-header" data-i18n="table_name">Name</th>
+        <th class="table-header" data-i18n="backup_connection_label">Connection</th>
+        <th class="table-header" data-i18n="table_type">Type</th>
+        <th class="table-header" data-i18n="table_next_run">Next Run</th>
+        <th class="table-header" data-i18n="table_status">Status</th>
+        <th class="table-header" data-i18n="table_runs">Runs</th>
+        <th class="table-header" data-i18n="table_last_run">Last Run</th>
+        <th class="table-header text-right" data-i18n="table_actions">Actions</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-700/10">
@@ -32,7 +32,7 @@
       <tr class="stagger-{{ loop.index }}">
         <td class="table-cell">
           <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+            <div class="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center">
               <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -47,20 +47,20 @@
           <span class="countdown text-sm font-medium text-indigo-300" data-next-run="{{ s.next_run_at.strftime('%Y-%m-%dT%H:%M:%S') }}"></span>
           <div class="text-xs text-gray-500">{{ s.next_run_at.strftime('%Y-%m-%d %H:%M') }}</div>
           {% elif s.is_paused %}
-          <span class="text-sm text-gray-500">Paused</span>
+          <span class="text-sm text-gray-500" data-i18n="status_paused">Paused</span>
           {% elif not s.is_active %}
-          <span class="text-sm text-gray-500">Inactive</span>
+          <span class="text-sm text-gray-500" data-i18n="status_inactive">Inactive</span>
           {% else %}
           <span class="text-sm text-gray-500">—</span>
           {% endif %}
         </td>
         <td class="table-cell">
           {% if s.is_paused %}
-          <span class="badge badge-warning"><span class="badge-dot warning"></span>Paused</span>
+          <span class="badge badge-warning"><span class="badge-dot warning"></span><span data-i18n="status_paused">Paused</span></span>
           {% elif s.is_active %}
-          <span class="badge badge-success"><span class="badge-dot success"></span>Active</span>
+          <span class="badge badge-success"><span class="badge-dot success"></span><span data-i18n="status_active">Active</span></span>
           {% else %}
-          <span class="badge badge-neutral">Inactive</span>
+          <span class="badge badge-neutral" data-i18n="status_inactive">Inactive</span>
           {% endif %}
         </td>
         <td class="table-cell">
@@ -68,21 +68,21 @@
           <span class="text-xs text-emerald-400 ml-1">({{ s.successful_runs }})</span>
           {% if s.failed_runs > 0 %}<span class="text-xs text-red-400">/{{ s.failed_runs }}</span>{% endif %}
         </td>
-        <td class="table-cell text-gray-500 text-xs">{% if s.last_run_at %}{{ s.last_run_at.strftime('%Y-%m-%d %H:%M') }}{% else %}<span class="text-gray-600">Never</span>{% endif %}</td>
+        <td class="table-cell text-gray-500 text-xs">{% if s.last_run_at %}{{ s.last_run_at.strftime('%Y-%m-%d %H:%M') }}{% else %}<span class="text-gray-600" data-i18n="never">Never</span>{% endif %}</td>
         <td class="table-cell text-right">
           <div class="flex items-center justify-end gap-1.5">
-            <a href="/schedules/{{ s.id }}/edit" class="btn btn-ghost btn-sm">Edit</a>
+            <a href="/schedules/{{ s.id }}/edit" class="btn btn-ghost btn-sm"><span data-i18n="btn_edit">Edit</span></a>
             {% if s.is_paused %}
             <form method="post" action="/schedules/{{ s.id }}/resume" class="inline">
-              <button type="submit" class="btn btn-ghost btn-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10">Resume</button>
+              <button type="submit" class="btn btn-ghost btn-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"><span data-i18n="sched_resume">Resume</span></button>
             </form>
             {% else %}
             <form method="post" action="/schedules/{{ s.id }}/pause" class="inline">
-              <button type="submit" class="btn btn-ghost btn-sm">Pause</button>
+              <button type="submit" class="btn btn-ghost btn-sm"><span data-i18n="sched_pause">Pause</span></button>
             </form>
             {% endif %}
             <form method="post" action="/schedules/{{ s.id }}/delete" onsubmit="return confirm('Delete this schedule?')" class="inline">
-              <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+              <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"><span data-i18n="btn_delete">Delete</span></button>
             </form>
           </div>
         </td>
@@ -98,9 +98,9 @@
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
     </svg>
   </div>
-  <h3 class="text-lg font-medium text-gray-300 mb-2">No schedules yet</h3>
-  <p class="text-gray-500 text-sm mb-6">Automate your backups with scheduled tasks</p>
-  <a href="/schedules/new" class="btn btn-primary">Create Schedule</a>
+  <h3 class="text-lg font-medium text-gray-300 mb-2" data-i18n="sched_no_schedules">No schedules yet</h3>
+  <p class="text-gray-500 text-sm mb-6" data-i18n="sched_no_schedules_desc">Automate your backups with scheduled tasks</p>
+  <a href="/schedules/new" class="btn btn-primary"><span data-i18n="sched_create">Create Schedule</span></a>
 </div>
 {% endif %}
 {% endblock %}

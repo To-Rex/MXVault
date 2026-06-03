@@ -11,8 +11,8 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-gray-300">Inspect Backup File</h3>
-        <p class="text-xs text-gray-500">View tables and data inside a PostgreSQL dump file without restoring.</p>
+        <h3 class="text-sm font-semibold text-gray-300" data-i18n="inspect_header">Inspect Backup File</h3>
+        <p class="text-xs text-gray-500" data-i18n="inspect_desc">View tables and data inside a PostgreSQL dump file without restoring.</p>
       </div>
     </div>
 
@@ -24,19 +24,19 @@
     {% endif %}
 
     <div class="flex gap-1 mb-5 p-1 rounded-xl bg-gray-700/20" id="sourceTabs">
-      <button type="button" onclick="switchSource('upload')" data-tab="upload" class="tab-btn flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 bg-indigo-500/20 text-indigo-300">Upload File</button>
-      <button type="button" onclick="switchSource('history')" data-tab="history" class="tab-btn flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-300">Backup History</button>
+      <button type="button" onclick="switchSource('upload')" data-tab="upload" class="tab-btn flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 bg-indigo-500/20 text-indigo-300" data-i18n="inspect_upload">Upload File</button>
+      <button type="button" onclick="switchSource('history')" data-tab="history" class="tab-btn flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-300" data-i18n="inspect_history">Backup History</button>
     </div>
 
     <form method="post" action="/inspect/analyze" enctype="multipart/form-data" id="inspectForm" onsubmit="return validateForm()" class="space-y-4">
       <div id="uploadSection">
-        <label class="label">Upload Backup File (.dump)</label>
+        <label class="label" data-i18n="inspect_upload_label">Upload Backup File (.dump)</label>
         <input type="file" name="upload_file" id="uploadFileInput" accept=".dump,.sql,.gz,.tar" class="block w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 file:transition-colors file:cursor-pointer cursor-pointer">
       </div>
       <div id="historySection" style="display:none">
-        <label class="label">Select from History</label>
+        <label class="label" data-i18n="inspect_select">Select from History</label>
         <select name="backup_id" id="backupSelect" class="select">
-          <option value="">Choose a backup...</option>
+          <option value="" data-i18n="inspect_choose_backup">Choose a backup...</option>
           {% for b in backups %}
           <option value="{{ b.id }}">{{ b.database_name }} — {{ b.filename }} ({{ (b.file_size_bytes / 1048576)|round(2) if b.file_size_bytes else 0 }} MB)</option>
           {% endfor %}
@@ -44,7 +44,7 @@
       </div>
       <button type="submit" class="btn btn-primary">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-        Analyze File
+        <span data-i18n="inspect_analyze">Analyze File</span>
       </button>
     </form>
   </div>
@@ -54,7 +54,7 @@
     {% if not (preview_data is defined) %}
     <div class="flex items-center gap-2 mb-4">
       <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-      <h3 class="text-sm font-semibold text-gray-300">Tables ({{ tables | length }})</h3>
+        <h3 class="text-sm font-semibold text-gray-300"><span data-i18n="inspect_tables">Tables</span> ({{ tables | length }})</h3>
       <span class="text-xs text-gray-500 ml-auto">{{ filename }}</span>
     </div>
     {% endif %}
@@ -63,13 +63,13 @@
     <div class="mb-4 pb-3 border-b border-gray-700/20">
       <button type="button" onclick="history.back()" class="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors bg-transparent border-0 cursor-pointer p-0">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Back to Tables
+        <span data-i18n="inspect_back">Back to Tables</span>
       </button>
       <div class="flex items-center gap-2 mt-2">
         <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
         <h3 class="text-sm font-semibold text-gray-300">{{ preview_table }}</h3>
         {% if preview_data.total_rows is defined %}
-        <span class="badge badge-neutral text-xs ml-2">{{ preview_data.total_rows }} row{{ 's' if preview_data.total_rows != 1 else '' }}</span>
+        <span class="badge badge-neutral text-xs ml-2">{{ preview_data.total_rows }} <span data-i18n="inspect_rows">row</span>{{ 's' if preview_data.total_rows != 1 else '' }}</span>
         {% endif %}
       </div>
     </div>
@@ -103,12 +103,12 @@
       </div>
       {% if preview_data.raw %}
       <details class="mt-3">
-        <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-400">Show raw SQL</summary>
+        <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-400" data-i18n="inspect_raw_sql">Show raw SQL</summary>
         <pre class="mt-2 p-3 rounded-lg bg-gray-900/80 border border-gray-700/30 text-xs text-gray-400 font-mono max-h-48 overflow-auto whitespace-pre-wrap break-all">{{ preview_data.raw[:10000] }}</pre>
       </details>
       {% endif %}
       {% else %}
-      <p class="text-sm text-gray-400">No data found in this table.</p>
+      <p class="text-sm text-gray-400" data-i18n="inspect_no_data">No data found in this table.</p>
       {% endif %}
     {% elif tables %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -122,16 +122,16 @@
           <input type="hidden" name="table_name" value="{{ t.full_name }}">
           <input type="hidden" name="filepath" value="{{ filepath }}">
           <input type="hidden" name="is_temp" value="{{ is_temp | lower }}">
-          <button type="submit" class="btn btn-ghost btn-sm w-full text-xs justify-center text-cyan-400 hover:text-cyan-300 group-hover:bg-cyan-500/5">View Data</button>
+          <button type="submit" class="btn btn-ghost btn-sm w-full text-xs justify-center text-cyan-400 hover:text-cyan-300 group-hover:bg-cyan-500/5"><span data-i18n="inspect_view_data">View Data</span></button>
         </form>
       </div>
       {% endfor %}
     </div>
     {% else %}
-    <p class="text-sm text-amber-300 bg-amber-500/5 rounded-lg p-3 border border-amber-500/20">No tables found in this backup file. The file may be empty or in an unrecognized format.</p>
+    <p class="text-sm text-amber-300 bg-amber-500/5 rounded-lg p-3 border border-amber-500/20" data-i18n="inspect_no_tables">No tables found in this backup file. The file may be empty or in an unrecognized format.</p>
     {% if raw_output %}
     <details class="mt-3">
-      <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-400">Show raw pg_restore output</summary>
+      <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-400" data-i18n="inspect_raw_output">Show raw pg_restore output</summary>
       <pre class="mt-2 p-3 rounded-lg bg-gray-900/80 border border-gray-700/30 text-xs text-gray-400 font-mono max-h-64 overflow-auto whitespace-pre-wrap break-all">{{ raw_output }}</pre>
     </details>
     {% endif %}

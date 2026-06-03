@@ -7,6 +7,7 @@
   <meta name="description" content="Open-source PostgreSQL backup management platform. Automated backups, cloud storage, restore, and monitoring.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="/static/js/i18n.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -140,7 +141,7 @@
   </script>
 </head>
 <body class="h-full bg-zinc-950 text-zinc-100 antialiased"
-      x-data="landing"
+      x-data="langData"
       x-init="init()">
 
   <!-- ═══════════ NAVBAR ═══════════ -->
@@ -629,262 +630,25 @@
       });
     });
 
-    const i18n = {
-      uz: {
-        badge: "Ochiq Kodli — Apache 2.0",
-        nav_signin: "Kirish",
-        nav_dashboard: "Dashboard",
-        hero_title: "PostgreSQL zahiralash",
-        hero_title_highlight: "oson va ishonchli",
-        hero_subtitle: "PostgreSQL ma'lumotlar bazalarini avtomatik zahiralash, bulutli xotiraga sinxronlash, bir tugma bilan tiklash va real vaqt monitoringi uchun ochiq kodli platforma.",
-        hero_cta_start: "Boshlash",
-        hero_cta_dashboard: "Dashboardga o'tish",
-        hero_cta_learn: "Batafsil",
-        features_label: "Imkoniyatlar",
-        features_title: "Barcha imkoniyatlar",
-        features_subtitle: "PostgreSQL ma'murlari uchun to'liq vositalar to'plami.",
-        feat1_title: "Ulanish menejeri",
-        feat1_desc: "PostgreSQL ulanishlarini qo'shing, sinab ko'ring va boshqaring. Shifrlangan parollar va har 5 daqiqada avtomatik sog'liq tekshiruvi.",
-        feat2_title: "Aqlli zahiralash",
-        feat2_desc: "pg_dump yordamida qo'lda zahiralash. Fon rejimida ishlash, hajmni baholash, vaqt chegarasi himoyasi va batafsil jurnal.",
-        feat3_title: "Moslashuvchan jadval",
-        feat3_desc: "Interval yoki cron asosidagi jadvallar. Soatlik, kunlik, haftalik, oylik shablonlar yoki maxsus cron ifodalar. Istalgan vaqtda to'xtatib qo'yish va davom ettirish.",
-        feat4_title: "Ko'p bulutli saqlash",
-        feat4_desc: "Mahalliy disk, Google Drive va Yandex Disk qo'llab-quvvatlanadi. Zahiralarni bir nechta bulut provayderiga bir vaqtda avtomatik yuklash.",
-        feat5_title: "Bir tugma bilan tiklash",
-        feat5_desc: "Zahira tarixidan yoki fayl yuklash orqali tiklash. Bulutdan avtomatik yuklab olish. Har qanday faol ulanishga tiklash mumkin.",
-        feat6_title: "Zahirani tahlil qilish",
-        feat6_desc: "Zahira tarkibini tahlil qiling. Jadval sxemalarini ajratib oling, ma'lumot qatorlarini oldindan ko'ring va butun bazani tiklamasdan tuzilmani tekshiring.",
-        feat7_title: "Ogohlantirish xabarlari",
-        feat7_desc: "Zahira muvaffaqiyati, muvaffaqiyatsizliklari va ulanish uzilishlari uchun Telegram va email xabarlari. Email uchun moslashtiriladigan HTML shablonlar.",
-        feat8_title: "Xavfsizlik va audit",
-        feat8_desc: "AES shifrlangan maxfiy ma'lumotlar, httponly cookie bilan sessiyaga asoslangan autentifikatsiya. Har bir muhim amaliyot uchun to'liq audit izi.",
-        how_label: "Qanday ishlaydi",
-        how_title: "Xotirjamlik sari uch qadam",
-        how_subtitle: "5 daqiqadan kam vaqt ichida ishga tushiring. Murakkab sozlash talab etilmaydi.",
-        step1_title: "Bazani ulang",
-        step1_desc: "PostgreSQL ulanish ma'lumotlarini kiriting. Ulanishni bir zumda sinab ko'ring.",
-        step1_time: "~30 soniya",
-        step2_title: "Jadvalni sozlang",
-        step2_desc: "Jadvalni tanlang — soatlik, kunlik, haftalik yoki maxsus cron. Saqlash manzillarini belgilang.",
-        step2_time: "~2 daqiqa",
-        step3_title: "Xotirjam bo'ling",
-        step3_desc: "MXVault qolganini o'zi bajaradi. Har bir zahira hodisasi uchun Telegram va email xabarlarini oling.",
-        step3_time: "Avtomatik",
-        cap_label: "Qobiliyatlar",
-        cap_title: "Oddiy zahiralashdan tashqari",
-        cap1_title: "Real vaqt sog'liq monitoringi",
-        cap1_desc: "Har 5 daqiqada avtomatik ulanish tekshiruvi. Ma'lumotlar bazalari ishlamay qolganda yoki tiklanganda darhol ogohlantirish.",
-        cap2_title: "Ko'p formatli zahira eksporti",
-        cap2_desc: "Maksimal moslashuvchanlik uchun pg_dump formatida. Siqilgan, portativ va barcha PostgreSQL vositalari bilan mos keladi.",
-        cap3_title: "To'liq shifrlash",
-        cap3_desc: "Barcha ulanish hisob ma'lumotlari AES bilan shifrlanadi. Xavfsiz httponly cookie bilan sessiyaga asoslangan autentifikatsiya.",
-        cap4_title: "Cheksiz saqlash manzillari",
-        cap4_desc: "Har bir jadval uchun bir nechta bulut provayderini sozlang. Zahiralar avtomatik ravishda Google Drive, Yandex Disk va mahalliy xotiraga taqsimlanadi.",
-        cap5_title: "Aqlli saqlash siyosati",
-        cap5_desc: "Sozlanadigan saqlash muddatlari asosida eski zahiralarni avtomatik tozalash. Hech qachon kutilmaganda disk joyi tugamaydi.",
-        cap6_title: "To'liq audit izi",
-        cap6_desc: "Har bir amaliyot qayd etiladi — kirishlar, zahiralar, tiklashlar, konfiguratsiya o'zgarishlari. Moslik va disk rassledovaniya uchun to'liq kuzatuv.",
-        tech_label: "Texnologiyalar",
-        tech_title: "Zamonaviy vositalar bilan qurilgan",
-        tech_subtitle: "Ishonchli, tezkor va ochiq kodli texnologiyalar to'plami.",
-        stat_storage: "Saqlash Provayderi",
-        stat_languages: "Interfeys Tili",
-        stat_monitoring: "Sog'liq Monitoringi",
-        stat_opensource: "Ochiq Kodli",
-        quote: "\"MXVault menga PostgreSQL ma'lumotlar bazalarim har kuni xavfsiz zahiralanishiga to'liq ishonch beradi. Telegram xabarlari hammasi nazorat ostida ekanligini bilib, tinch uxlashimga imkon beradi.\"",
-        quote_name: "Ma'lumotlar Bazasi Administratori",
-        cta_title: "Ma'lumotlaringizni himoyalashga tayyormisiz?",
-        cta_subtitle: "5 daqiqadan kam vaqt ichida avtomatik PostgreSQL zahiralashni sozlang.",
-        cta_button: "Bepul boshlash",
-        cta_github: "GitHub'da ko'rish",
-        footer_tagline: "Ochiq Kodli PostgreSQL Zahiralash Boshqaruvi",
-      },
-      ru: {
-        badge: "Открытый код — Apache 2.0",
-        nav_signin: "Войти",
-        nav_dashboard: "Панель",
-        hero_title: "Резервное копирование",
-        hero_title_highlight: "PostgreSQL стало простым",
-        hero_subtitle: "Платформа с открытым кодом для автоматического резервного копирования PostgreSQL, синхронизации с облаком, восстановления в один клик и мониторинга в реальном времени.",
-        hero_cta_start: "Начать",
-        hero_cta_dashboard: "Перейти в панель",
-        hero_cta_learn: "Подробнее",
-        features_label: "Возможности",
-        features_title: "Все возможности",
-        features_subtitle: "Полный набор инструментов для администраторов PostgreSQL.",
-        feat1_title: "Менеджер подключений",
-        feat1_desc: "Добавление, тестирование и управление подключениями PostgreSQL. Шифрованные учетные данные и автоматическая проверка здоровья каждые 5 минут.",
-        feat2_title: "Умные бэкапы",
-        feat2_desc: "Ручное резервное копирование через pg_dump. Фоновое выполнение, оценка размера, защита по тайм-ауту и подробное логирование.",
-        feat3_title: "Гибкое расписание",
-        feat3_desc: "Расписания на основе интервалов или cron. Шаблоны: ежечасно, ежедневно, еженедельно, ежемесячно или пользовательские cron-выражения. Пауза и возобновление в любое время.",
-        feat4_title: "Мультиоблачное хранилище",
-        feat4_desc: "Локальный диск, Google Drive и Яндекс.Диск. Автоматическая загрузка бэкапов на несколько облачных провайдеров одновременно.",
-        feat5_title: "Восстановление в один клик",
-        feat5_desc: "Восстановление из истории бэкапов или загрузка файла. Автоматическая загрузка из облака. Восстановление на любое активное подключение.",
-        feat6_title: "Инспекция бэкапов",
-        feat6_desc: "Анализ содержимого бэкапа. Извлечение схем таблиц, предпросмотр данных и проверка структуры без полного восстановления.",
-        feat7_title: "Уведомления",
-        feat7_desc: "Telegram и Email оповещения об успехе, сбоях и проблемах подключения. Настраиваемые HTML-шаблоны для писем.",
-        feat8_title: "Безопасность и аудит",
-        feat8_desc: "AES-шифрование секретов, аутентификация на основе сессий с httponly cookie. Полный аудит всех критических операций.",
-        how_label: "Как это работает",
-        how_title: "Три шага к спокойствию",
-        how_subtitle: "Запустите за 5 минут. Никаких сложных настроек.",
-        step1_title: "Подключите базу",
-        step1_desc: "Введите данные подключения PostgreSQL. Мгновенно проверьте соединение.",
-        step1_time: "~30 секунд",
-        step2_title: "Настройте расписание",
-        step2_desc: "Выберите расписание — ежечасно, ежедневно, еженедельно или свой cron. Укажите хранилища.",
-        step2_time: "~2 минуты",
-        step3_title: "Расслабьтесь",
-        step3_desc: "MXVault сделает всё остальное. Получайте уведомления в Telegram и на Email о каждом событии.",
-        step3_time: "Автоматически",
-        cap_label: "Возможности",
-        cap_title: "Больше, чем просто бэкапы",
-        cap1_title: "Мониторинг в реальном времени",
-        cap1_desc: "Автоматическая проверка подключений каждые 5 минут. Мгновенные оповещения при сбоях и восстановлении баз данных.",
-        cap2_title: "Мультиформатный экспорт",
-        cap2_desc: "Нативный формат pg_dump для максимальной гибкости. Сжатый, портативный и совместимый со всеми инструментами PostgreSQL.",
-        cap3_title: "Сквозное шифрование",
-        cap3_desc: "Все учетные данные шифруются с помощью AES. Аутентификация на основе сессий с безопасными httponly cookie.",
-        cap4_title: "Неограниченное число хранилищ",
-        cap4_desc: "Настройте несколько облачных провайдеров для каждого расписания. Бэкапы автоматически распределяются на Google Drive, Яндекс.Диск и локальное хранилище.",
-        cap5_title: "Умная политика хранения",
-        cap5_desc: "Автоматическая очистка старых бэкапов по настраиваемым срокам хранения. Дисковое пространство никогда не закончится неожиданно.",
-        cap6_title: "Полный аудит",
-        cap6_desc: "Каждое действие регистрируется — входы, бэкапы, восстановления, изменения конфигурации. Полная прослеживаемость для соответствия требованиям и отладки.",
-        tech_label: "Технологии",
-        tech_title: "Построено на современных инструментах",
-        tech_subtitle: "Надёжный, быстрый стек технологий с открытым кодом.",
-        stat_storage: "Провайдеров хранения",
-        stat_languages: "Языков интерфейса",
-        stat_monitoring: "Мониторинг здоровья",
-        stat_opensource: "Открытый код",
-        quote: "\"MXVault даёт мне полную уверенность, что мои базы данных PostgreSQL надёжно защищены каждый день. Уведомления в Telegram позволяют спать спокойно, зная, что всё под контролем.\"",
-        quote_name: "Администратор баз данных",
-        cta_title: "Готовы защитить свои данные?",
-        cta_subtitle: "Настройте автоматическое резервное копирование PostgreSQL менее чем за 5 минут.",
-        cta_button: "Начать бесплатно",
-        cta_github: "Смотреть на GitHub",
-        footer_tagline: "Управление резервным копированием PostgreSQL с открытым кодом",
-      },
-      en: {
-        badge: "Open Source — Apache 2.0",
-        nav_signin: "Sign In",
-        nav_dashboard: "Dashboard",
-        hero_title: "PostgreSQL Backup",
-        hero_title_highlight: "Made Simple",
-        hero_subtitle: "Open-source platform for automated PostgreSQL backups, cloud storage sync, one-click restore, and real-time health monitoring — all from a single dashboard.",
-        hero_cta_start: "Get Started",
-        hero_cta_dashboard: "Go to Dashboard",
-        hero_cta_learn: "Learn More",
-        features_label: "Features",
-        features_title: "Everything You Need",
-        features_subtitle: "A complete toolkit for PostgreSQL database administrators.",
-        feat1_title: "Connection Manager",
-        feat1_desc: "Add, test, and manage PostgreSQL connections. Encrypted credential storage with automatic health checks every 5 minutes.",
-        feat2_title: "Smart Backups",
-        feat2_desc: "Run on-demand backups using native pg_dump. Background execution, size estimation, timeout protection, and detailed logging.",
-        feat3_title: "Flexible Scheduling",
-        feat3_desc: "Interval or cron-based schedules. Hourly, daily, weekly, monthly presets, or custom cron expressions. Pause and resume anytime.",
-        feat4_title: "Multi-Cloud Storage",
-        feat4_desc: "Local disk, Google Drive, and Yandex Disk support. Auto-upload backups to multiple cloud providers simultaneously.",
-        feat5_title: "One-Click Restore",
-        feat5_desc: "Restore from backup history or file upload. Downloads from cloud storage automatically. Restore to any active connection.",
-        feat6_title: "Backup Inspection",
-        feat6_desc: "Analyze backup contents. Extract table schemas, preview data rows, and inspect structure without restoring the entire database.",
-        feat7_title: "Alert Notifications",
-        feat7_desc: "Telegram and email alerts for backup success, failures, and connection outages. Customizable HTML templates for emails.",
-        feat8_title: "Security & Audit",
-        feat8_desc: "AES-encrypted secrets, session-based auth with httponly cookies. Full audit trail for every critical operation.",
-        how_label: "How It Works",
-        how_title: "Three steps to peace of mind",
-        how_subtitle: "Get started in under 5 minutes. No complex configuration needed.",
-        step1_title: "Connect Database",
-        step1_desc: "Add your PostgreSQL connection with host, port, and credentials. Test connectivity instantly.",
-        step1_time: "~30 seconds",
-        step2_title: "Schedule Backups",
-        step2_desc: "Choose your schedule — hourly, daily, weekly, or custom cron. Select storage destinations.",
-        step2_time: "~2 minutes",
-        step3_title: "Relax & Monitor",
-        step3_desc: "MXVault handles the rest. Get Telegram and email alerts for every backup event.",
-        step3_time: "Automatic",
-        cap_label: "Capabilities",
-        cap_title: "Beyond basic backups",
-        cap1_title: "Real-time Health Monitoring",
-        cap1_desc: "Automatic connection health checks every 5 minutes. Instant alerts when databases go down or recover.",
-        cap2_title: "Multi-Format Backup Export",
-        cap2_desc: "Native pg_dump custom format for maximum flexibility. Compressed, portable, and compatible with all PostgreSQL tools.",
-        cap3_title: "End-to-End Encryption",
-        cap3_desc: "All connection credentials encrypted at rest with AES. Session-based authentication with secure httponly cookies.",
-        cap4_title: "Unlimited Storage Destinations",
-        cap4_desc: "Configure multiple cloud providers per schedule. Backups automatically distributed to Google Drive, Yandex Disk, and local storage.",
-        cap5_title: "Smart Retention Policies",
-        cap5_desc: "Automatic cleanup of old backups based on configurable retention periods. Never run out of disk space unexpectedly.",
-        cap6_title: "Complete Audit Trail",
-        cap6_desc: "Every action logged — logins, backups, restores, configuration changes. Full traceability for compliance and debugging.",
-        tech_label: "Tech Stack",
-        tech_title: "Built with modern tools",
-        tech_subtitle: "Reliable, fast, and open-source technology stack.",
-        stat_storage: "Storage Providers",
-        stat_languages: "Interface Languages",
-        stat_monitoring: "Health Monitoring",
-        stat_opensource: "Open Source",
-        quote: "\"MXVault gives me complete confidence that my PostgreSQL databases are backed up securely, every single day. The Telegram notifications let me sleep peacefully knowing everything is under control.\"",
-        quote_name: "Database Administrator",
-        cta_title: "Ready to secure your data?",
-        cta_subtitle: "Set up automated PostgreSQL backups in under 5 minutes.",
-        cta_button: "Start Free",
-        cta_github: "View on GitHub",
-        footer_tagline: "Open Source PostgreSQL Backup Management",
-      }
-    };
-
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('landing', () => ({
-        lang: 'uz',
-
-        init() {
-          const saved = this.getCookie('mxvault_lang');
-          if (saved && i18n[saved]) this.lang = saved;
-          this.applyLang();
-        },
-
-        setLang(l) {
-          this.lang = l;
-          this.setCookie('mxvault_lang', l, 365);
-          this.applyLang();
-          // Re-observe reveals after language change
-          document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
-            observer.unobserve(el);
-            observer.observe(el);
-          });
-        },
-
-        applyLang() {
-          document.documentElement.lang = this.lang === 'uz' ? 'uz' : this.lang === 'ru' ? 'ru' : 'en';
-          document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.dataset.i18n;
-            const dict = i18n[this.lang] || i18n['uz'];
-            if (dict[key]) el.textContent = dict[key];
-          });
-        },
-
-        getCookie(name) {
-          const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-          return match ? match[2] : null;
-        },
-
-        setCookie(name, value, days) {
-          const d = new Date();
-          d.setTime(d.getTime() + days * 86400000);
-          document.cookie = name + '=' + value + ';path=/;expires=' + d.toUTCString() + ';SameSite=Lax';
-        }
-      }));
+    /* i18n loaded from /static/js/i18n.js */
+    /* Landing-specific: extend setLang to re-observe reveal elements */
+    const _origInit = null;
+    document.addEventListener('DOMContentLoaded', () => {
+      const landingEl = document.querySelector('[x-data="langData"]');
+      if (!landingEl || !landingEl._x_dataStack) return;
+      const data = landingEl._x_dataStack[0];
+      const origSetLang = data.setLang.bind(data);
+      data.setLang = function(l) {
+        origSetLang(l);
+        document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
+          observer.unobserve(el);
+          observer.observe(el);
+        });
+      };
     });
   </script>
+
+  <!-- Old inline i18n removed — using shared /static/js/i18n.js -->
 
 </body>
 </html>

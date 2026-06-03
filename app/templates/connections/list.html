@@ -9,7 +9,7 @@
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
     </svg>
-    New Connection
+    <span data-i18n="conn_new">New Connection</span>
   </a>
 </div>
 
@@ -18,12 +18,12 @@
   <table class="w-full">
     <thead>
       <tr>
-        <th class="table-header">Name</th>
-        <th class="table-header">Host</th>
-        <th class="table-header">Database</th>
-        <th class="table-header">Status</th>
-        <th class="table-header">Last Backup</th>
-        <th class="table-header text-right">Actions</th>
+        <th class="table-header" data-i18n="table_name">Name</th>
+        <th class="table-header" data-i18n="table_host">Host</th>
+        <th class="table-header" data-i18n="table_database">Database</th>
+        <th class="table-header" data-i18n="table_status">Status</th>
+        <th class="table-header" data-i18n="table_last_run">Last Backup</th>
+        <th class="table-header text-right" data-i18n="table_actions">Actions</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-700/10">
@@ -31,7 +31,7 @@
       <tr class="stagger-{{ loop.index }}">
         <td class="table-cell">
           <a href="/connections/{{ conn.id }}" class="text-indigo-400 hover:text-indigo-300 font-medium transition-colors flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center text-xs font-bold text-indigo-400">
+            <div class="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-400">
               {{ conn.name[:2].upper() }}
             </div>
             {{ conn.name }}
@@ -45,21 +45,21 @@
         </td>
         <td class="table-cell" id="status-{{ conn.id }}">
           {% if conn.is_active %}
-          <span class="badge badge-success"><span class="badge-dot success"></span>Active</span>
+           <span class="badge badge-success"><span class="badge-dot success"></span><span data-i18n="status_active">Active</span></span>
           {% else %}
-          <span class="badge badge-danger"><span class="badge-dot danger"></span>Inactive</span>
+           <span class="badge badge-danger"><span class="badge-dot danger"></span><span data-i18n="status_inactive">Inactive</span></span>
           {% endif %}
         </td>
         <td class="table-cell text-gray-500 text-xs">
           {% if conn.last_backup_at %}{{ conn.last_backup_at.strftime('%b %d, %Y %H:%M') }}{% else %}
-          <span class="text-gray-600">Never</span>{% endif %}
+           <span class="text-gray-600" data-i18n="never">Never</span>{% endif %}
         </td>
         <td class="table-cell text-right">
           <div class="flex items-center justify-end gap-1.5">
-            <a href="/connections/{{ conn.id }}/edit" class="btn btn-ghost btn-sm">Edit</a>
-            <button data-conn-id="{{ conn.id }}" onclick="testConnection(this, '{{ conn.id }}')" class="btn btn-ghost btn-sm">Test</button>
+             <a href="/connections/{{ conn.id }}/edit" class="btn btn-ghost btn-sm"><span data-i18n="btn_edit">Edit</span></a>
+            <button data-conn-id="{{ conn.id }}" onclick="testConnection(this, '{{ conn.id }}')" class="btn btn-ghost btn-sm"><span data-i18n="btn_test">Test</span></button>
             <form method="post" action="/connections/{{ conn.id }}/delete" onsubmit="return confirm('Delete this connection?')" class="inline">
-              <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+              <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"><span data-i18n="btn_delete">Delete</span></button>
             </form>
           </div>
         </td>
@@ -75,9 +75,9 @@
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
     </svg>
   </div>
-  <h3 class="text-lg font-medium text-gray-300 mb-2">No connections yet</h3>
-  <p class="text-gray-500 text-sm mb-6">Add your first PostgreSQL database connection</p>
-  <a href="/connections/new" class="btn btn-primary">Add Connection</a>
+  <h3 class="text-lg font-medium text-gray-300 mb-2" data-i18n="conn_no_connections">No connections yet</h3>
+  <p class="text-gray-500 text-sm mb-6" data-i18n="conn_no_connections_desc">Add your first PostgreSQL database connection</p>
+  <a href="/connections/new" class="btn btn-primary"><span data-i18n="conn_add">Add Connection</span></a>
 </div>
 {% endif %}
 
@@ -86,7 +86,7 @@
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeTestModal()"></div>
   <div class="relative glass-card p-6 max-w-sm w-full">
     <div id="testResult"></div>
-    <button onclick="closeTestModal()" class="btn btn-secondary w-full mt-4 justify-center">Close</button>
+    <button onclick="closeTestModal()" class="btn btn-secondary w-full mt-4 justify-center"><span data-i18n="btn_close">Close</span></button>
   </div>
 </div>
 {% endblock %}
@@ -104,13 +104,13 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
       .then(function(data) {
         if (data.success) {
-          statusCell.innerHTML = '<span class="badge badge-success"><span class="badge-dot success"></span>Active</span>';
+          statusCell.innerHTML = '<span class="badge badge-success"><span class="badge-dot success"></span><span data-i18n="status_active">Active</span></span>';
         } else {
-          statusCell.innerHTML = '<span class="badge badge-danger"><span class="badge-dot danger"></span>Inactive</span>';
+          statusCell.innerHTML = '<span class="badge badge-danger"><span class="badge-dot danger"></span><span data-i18n="status_inactive">Inactive</span></span>';
         }
       })
       .catch(function() {
-        statusCell.innerHTML = '<span class="badge badge-danger"><span class="badge-dot danger"></span>Inactive</span>';
+        statusCell.innerHTML = '<span class="badge badge-danger"><span class="badge-dot danger"></span><span data-i18n="status_inactive">Inactive</span></span>';
       });
   });
 });
