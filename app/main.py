@@ -52,6 +52,17 @@ if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
+@app.get("/favicon.ico")
+def favicon():
+    svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <path d="M20 28v16a4 4 0 004 4h16a4 4 0 004-4V28M20 28a4 4 0 014-4h16a4 4 0 014 4M20 28l-4-8h32l-4 8M32 24v20" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M26 32l4 4 8-8" stroke="#a5b4fc" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
+    return Response(content=svg, media_type="image/svg+xml")
+
+
 @app.get("/robots.txt")
 def robots():
     return Response(
