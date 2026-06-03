@@ -1,44 +1,322 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
 {% block content %}
 
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-  {% set stats = [
-    ('stat_databases', stats.total_databases, 'Databases', 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', '#3b82f6'),
-    ('stat_total_backups', stats.total_backups, 'Total Backups', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4', '#10b981'),
-    ('stat_successful', stats.successful_backups, 'Successful', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', '#34d399'),
-    ('stat_failed', stats.failed_backups, 'Failed', 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', '#f87171'),
-    ('stat_running', stats.running_backups, 'Running', 'M13 10V3L4 14h7v7l9-11h-7z', '#fbbf24'),
-    ('stat_storage_dash', (stats.storage_usage_gb|string + ' GB') if stats.storage_usage_gb >= 1 else (stats.storage_usage_mb|string + ' MB'), 'Storage', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4', '#a855f7'),
-    ('stat_last_backup', stats.last_backup_name or '—', 'Last Backup', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', '#818cf8'),
-    ('stat_next_schedule', stats.next_schedule_name or '—', 'Next Schedule', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', '#22d3ee'),
-  ] %}
-  {% for i18n_key, value, en_label, icon, hex in stats %}
-  <div class="stat-card stagger-{{ loop.index }}">
-    <div class="flex items-center justify-between mb-1">
-      <span class="stat-label" style="color: {{ hex }}80;" data-i18n="{{ i18n_key }}">{{ en_label }}</span>
-      <div class="stat-icon" style="background: {{ hex }}12; color: {{ hex }};">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ icon }}"/>
-        </svg>
-      </div>
-    </div>
-    <div class="stat-value" style="color: {{ hex }};">{{ value }}</div>
-  </div>
-  {% endfor %}
+<!-- Animated Background -->
+<div class="dashboard-ambient">
+  <div class="ambient-orb orb-1"></div>
+  <div class="ambient-orb orb-2"></div>
+  <div class="ambient-orb orb-3"></div>
 </div>
 
-<!-- Charts Row -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Welcome Section -->
+<div class="welcome-section stagger-1">
+  <div class="welcome-content">
+    <div class="welcome-avatar">
+      <span>{{ user.username[:2].upper() }}</span>
+    </div>
+    <div>
+      <h2 class="welcome-greeting" id="welcomeGreeting">Welcome back</h2>
+      <p class="welcome-name">{{ user.display_name or user.username }}</p>
+      <p class="welcome-subtitle" data-i18n="dash_subtitle">Here's what's happening with your backups today</p>
+    </div>
+  </div>
+  <div class="welcome-badge-group">
+    <div class="welcome-badge">
+      <span class="welcome-badge-dot"></span>
+      <span data-i18n="dash_system_online">System Online</span>
+    </div>
+    <div class="welcome-date" id="currentDate"></div>
+  </div>
+</div>
 
+<!-- Main Stats Row -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <!-- Databases -->
+  <div class="stat-card-modern stagger-1" style="--accent: #6366f1; --accent-rgb: 99,102,241; --accent-glow: rgba(99,102,241,0.15);">
+    <div class="stat-card-bg"></div>
+    <div class="stat-card-content">
+      <div class="stat-card-top">
+        <span class="stat-card-label" data-i18n="stat_databases">Databases</span>
+        <div class="stat-card-icon">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-card-value" data-target="{{ stats.total_databases }}">{{ stats.total_databases }}</div>
+      <div class="stat-card-footer">
+        <span class="stat-card-change up">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          <span data-i18n="dash_total_connections">Total connections</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Backups -->
+  <div class="stat-card-modern stagger-2" style="--accent: #10b981; --accent-rgb: 16,185,129; --accent-glow: rgba(16,185,129,0.15);">
+    <div class="stat-card-bg"></div>
+    <div class="stat-card-content">
+      <div class="stat-card-top">
+        <span class="stat-card-label" data-i18n="stat_total_backups">Total Backups</span>
+        <div class="stat-card-icon">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-card-value" data-target="{{ stats.total_backups }}">{{ stats.total_backups }}</div>
+      <div class="stat-card-footer">
+        <span class="stat-card-change up">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          <span><span class="stat-success-pct">{{ stats.success_rate }}</span>% <span data-i18n="dash_success_rate">success rate</span></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Successful -->
+  <div class="stat-card-modern stagger-3" style="--accent: #0ea5e9; --accent-rgb: 14,165,233; --accent-glow: rgba(14,165,233,0.15);">
+    <div class="stat-card-bg"></div>
+    <div class="stat-card-content">
+      <div class="stat-card-top">
+        <span class="stat-card-label" data-i18n="stat_successful">Successful</span>
+        <div class="stat-card-icon">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-card-value" data-target="{{ stats.successful_backups }}">{{ stats.successful_backups }}</div>
+      <div class="stat-card-footer">
+        <div class="stat-card-micro-bar">
+          <div class="stat-card-micro-fill" style="width: {{ stats.success_rate }}%; background: var(--accent);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Storage -->
+  <div class="stat-card-modern stagger-4" style="--accent: #a855f7; --accent-rgb: 168,85,247; --accent-glow: rgba(168,85,247,0.15);">
+    <div class="stat-card-bg"></div>
+    <div class="stat-card-content">
+      <div class="stat-card-top">
+        <span class="stat-card-label" data-i18n="stat_storage_dash">Storage</span>
+        <div class="stat-card-icon">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-card-value">
+        {% if stats.storage_usage_gb >= 1 %}
+        {{ stats.storage_usage_gb }} <span class="stat-card-unit">GB</span>
+        {% else %}
+        {{ stats.storage_usage_mb }} <span class="stat-card-unit">MB</span>
+        {% endif %}
+      </div>
+      <div class="stat-card-footer">
+        <span class="stat-card-change neutral">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+          <span data-i18n="dash_total_storage">Total storage used</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Secondary Stats Row -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+  <!-- Failed -->
+  <div class="stat-card-mini stagger-1">
+    <div class="stat-card-mini-icon" style="background: rgba(239,68,68,0.12); color: #f87171;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-card-mini-body">
+      <span class="stat-card-mini-value" data-target="{{ stats.failed_backups }}">{{ stats.failed_backups }}</span>
+      <span class="stat-card-mini-label" data-i18n="stat_failed">Failed</span>
+    </div>
+  </div>
+
+  <!-- Running -->
+  <div class="stat-card-mini stagger-2">
+    <div class="stat-card-mini-icon" style="background: rgba(251,191,36,0.12); color: #fbbf24;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
+    </div>
+    <div class="stat-card-mini-body">
+      <div class="stat-card-mini-value">
+        {{ stats.running_backups }}
+        {% if stats.running_backups > 0 %}
+        <span class="running-dot"></span>
+        {% endif %}
+      </div>
+      <span class="stat-card-mini-label" data-i18n="stat_running">Running</span>
+    </div>
+  </div>
+
+  <!-- Last Backup -->
+  <div class="stat-card-mini stagger-3">
+    <div class="stat-card-mini-icon" style="background: rgba(129,140,248,0.12); color: #818cf8;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-card-mini-body">
+      <span class="stat-card-mini-value-sm">{{ stats.last_backup_name or '—' }}</span>
+      <span class="stat-card-mini-label" data-i18n="stat_last_backup">Last Backup</span>
+    </div>
+  </div>
+
+  <!-- Next Schedule -->
+  <div class="stat-card-mini stagger-4">
+    <div class="stat-card-mini-icon" style="background: rgba(34,211,238,0.12); color: #22d3ee;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+    </div>
+    <div class="stat-card-mini-body">
+      <span class="stat-card-mini-value-sm">{{ stats.next_schedule_name or '—' }}</span>
+      <span class="stat-card-mini-label" data-i18n="stat_next_schedule">Next Schedule</span>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <!-- Backup Activity Timeline -->
+  <div class="glass-card chart-card stagger-5">
+    <div class="chart-card-header">
+      <div class="chart-card-title-group">
+        <div class="chart-card-icon" style="background: rgba(16,185,129,0.12); color: #34d399;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="chart-card-title" data-i18n="dash_backup_activity">Backup Activity</h3>
+          <p class="chart-card-subtitle" data-i18n="dash_last_30_days">Last 30 days</p>
+        </div>
+      </div>
+      <div class="chart-card-legend" id="timelineLegend">
+        <span class="chart-legend-item">
+          <span class="chart-legend-dot" style="background: #34d399;"></span>
+          <span data-i18n="status_success">Success</span>
+        </span>
+        <span class="chart-legend-item">
+          <span class="chart-legend-dot" style="background: #f87171;"></span>
+          <span data-i18n="status_failed_label">Failed</span>
+        </span>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="backupTimelineChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Status Distribution -->
+  <div class="glass-card chart-card stagger-6">
+    <div class="chart-card-header">
+      <div class="chart-card-title-group">
+        <div class="chart-card-icon" style="background: rgba(99,102,241,0.12); color: #818cf8;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="chart-card-title" data-i18n="dash_status_chart">Status Distribution</h3>
+          <p class="chart-card-subtitle" data-i18n="dash_overview">Overview</p>
+        </div>
+      </div>
+    </div>
+    <div class="chart-container chart-container-doughnut">
+      <canvas id="statusDistributionChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <!-- Storage by Connection -->
+  <div class="glass-card chart-card stagger-7">
+    <div class="chart-card-header">
+      <div class="chart-card-title-group">
+        <div class="chart-card-icon" style="background: rgba(168,85,247,0.12); color: #c084fc;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="chart-card-title" data-i18n="dash_storage_chart">Storage by Connection</h3>
+          <p class="chart-card-subtitle" data-i18n="dash_storage_dist">Distribution across databases</p>
+        </div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="storageChart"></canvas>
+      {% if not storage_per_connection %}
+      <div class="chart-empty">
+        <span data-i18n="no_backups">No data yet</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Schedule Types -->
+  <div class="glass-card chart-card stagger-8">
+    <div class="chart-card-header">
+      <div class="chart-card-title-group">
+        <div class="chart-card-icon" style="background: rgba(245,158,11,0.12); color: #fbbf24;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="chart-card-title" data-i18n="dash_schedule_chart">Schedule Types</h3>
+          <p class="chart-card-subtitle" data-i18n="dash_schedule_breakdown">Breakdown by type</p>
+        </div>
+      </div>
+    </div>
+    <div class="chart-container chart-container-doughnut">
+      <canvas id="scheduleChart"></canvas>
+      {% if not schedule_types %}
+      <div class="chart-empty">
+        <span data-i18n="no_schedules">No schedules configured</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Recent Backups & Active Schedules -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
   <!-- Recent Backups -->
-  <div class="glass-card p-5 stagger-6">
+  <div class="glass-card p-5 stagger-9">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider" data-i18n="dash_recent_backups">Recent Backups</h3>
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider" data-i18n="dash_recent_backups">Recent Backups</h3>
+      </div>
       {% if recent_backups %}
-      <a href="/backups" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"><span data-i18n="dash_view_all">View all →</span></a>
+      <a href="/backups" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+        <span data-i18n="dash_view_all">View all</span>
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </a>
       {% endif %}
     </div>
     {% if recent_backups %}
@@ -96,11 +374,21 @@
   </div>
 
   <!-- Active Schedules -->
-  <div class="glass-card p-5 stagger-7">
+  <div class="glass-card p-5 stagger-10">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider" data-i18n="dash_active_schedules">Active Schedules</h3>
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider" data-i18n="dash_active_schedules">Active Schedules</h3>
+      </div>
       {% if schedules %}
-      <a href="/schedules" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"><span data-i18n="dash_view_all">View all →</span></a>
+      <a href="/schedules" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+        <span data-i18n="dash_view_all">View all</span>
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </a>
       {% endif %}
     </div>
     {% if schedules %}
@@ -108,15 +396,20 @@
       {% for s in schedules %}
       <div class="flex items-center justify-between p-3 rounded-xl bg-gray-700/20 hover:bg-gray-700/30 transition-all duration-200 group stagger-{{ loop.index }}">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+          <div class="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center schedule-icon-{{ s.schedule_type }}">
             <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
           <div>
             <p class="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">{{ s.name }}</p>
-            {% set sched_map = {'interval': 'sched_types_interval', 'hourly': 'sched_types_hourly', 'daily': 'sched_types_daily', 'weekly': 'sched_types_weekly', 'monthly': 'sched_types_monthly'} %}
-            <p class="text-xs text-gray-500"><span data-i18n="{{ sched_map.get(s.schedule_type, '') }}">{{ s.schedule_type | capitalize }}</span> • {{ s.total_runs }} <span data-i18n="runs_count">runs</span></p>
+            <p class="text-xs text-gray-500">
+              <span class="schedule-type-badge schedule-{{ s.schedule_type }}">
+                {{ {'interval': 'Interval', 'hourly': 'Hourly', 'daily': 'Daily', 'weekly': 'Weekly', 'monthly': 'Monthly'}.get(s.schedule_type, s.schedule_type | capitalize) }}
+              </span>
+              <span class="mx-1">•</span>
+              {{ s.total_runs }} <span data-i18n="runs_count">runs</span>
+            </p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -139,4 +432,354 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+  // ─── Greeting based on time of day ───
+  const hour = new Date().getHours();
+  const greetingEl = document.getElementById('welcomeGreeting');
+  let greetingKey = 'dash_welcome';
+  if (hour < 12) greetingKey = 'dash_good_morning';
+  else if (hour < 18) greetingKey = 'dash_good_afternoon';
+  else greetingKey = 'dash_good_evening';
+  const greetings = {
+    uz: { 'dash_good_morning': 'Xayrli tong', 'dash_good_afternoon': 'Xayrli kun', 'dash_good_evening': 'Xayrli kech', 'dash_welcome': 'Xush kelibsiz' },
+    ru: { 'dash_good_morning': 'Доброе утро', 'dash_good_afternoon': 'Добрый день', 'dash_good_evening': 'Добрый вечер', 'dash_welcome': 'Добро пожаловать' },
+    en: { 'dash_good_morning': 'Good morning', 'dash_good_afternoon': 'Good afternoon', 'dash_good_evening': 'Good evening', 'dash_welcome': 'Welcome back' },
+  };
+  const lang = localStorage.getItem('lang') || 'en';
+  greetingEl.textContent = greetings[lang]?.[greetingKey] || greetings.en[greetingKey];
+
+  // ─── Date ───
+  const dateEl = document.getElementById('currentDate');
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(lang === 'uz' ? 'uz-UZ' : lang === 'ru' ? 'ru-RU' : 'en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  dateEl.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+  // ─── Animated Counters ───
+  function animateCounter(el) {
+    const target = parseInt(el.getAttribute('data-target'));
+    if (!target || target === 0) { el.textContent = '0'; return; }
+    const duration = 1200;
+    const start = performance.now();
+    function update(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(eased * target);
+      el.textContent = current;
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.stat-card-value[data-target]').forEach(el => observer.observe(el));
+  document.querySelectorAll('.stat-card-mini-value[data-target]').forEach(el => observer.observe(el));
+
+  // ─── Charts ───
+  const isDark = document.documentElement.classList.contains('dark') ||
+                 document.documentElement.getAttribute('class') === 'dark' ||
+                 localStorage.getItem('theme') !== 'light';
+
+  function chartGridColor() {
+    return isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)';
+  }
+  function chartTextColor() {
+    return isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)';
+  }
+
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = chartTextColor();
+
+  // 1. Backup Timeline (Area Chart)
+  const timelineCtx = document.getElementById('backupTimelineChart');
+  if (timelineCtx) {
+    const dailyStats = {{ daily_stats | tojson }};
+    const labels = dailyStats.map(d => {
+      const parts = d.date.split('-');
+      return parts[1] + '/' + parts[2];
+    });
+    const successData = dailyStats.map(d => d.success);
+    const failedData = dailyStats.map(d => d.failed);
+
+    new Chart(timelineCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Successful',
+            data: successData,
+            borderColor: '#34d399',
+            backgroundColor: function(ctx) {
+              const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+              g.addColorStop(0, 'rgba(16,185,129,0.25)');
+              g.addColorStop(1, 'rgba(16,185,129,0.01)');
+              return g;
+            },
+            fill: true,
+            tension: 0.45,
+            pointRadius: 2,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#34d399',
+            pointHoverBackgroundColor: '#34d399',
+            borderWidth: 2.5,
+          },
+          {
+            label: 'Failed',
+            data: failedData,
+            borderColor: '#f87171',
+            backgroundColor: function(ctx) {
+              const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+              g.addColorStop(0, 'rgba(239,68,68,0.15)');
+              g.addColorStop(1, 'rgba(239,68,68,0.01)');
+              return g;
+            },
+            fill: true,
+            tension: 0.45,
+            pointRadius: 2,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#f87171',
+            pointHoverBackgroundColor: '#f87171',
+            borderWidth: 2.5,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: isDark ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+            titleColor: isDark ? '#f3f4f6' : '#1e293b',
+            bodyColor: isDark ? '#d1d5db' : '#475569',
+            borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 12,
+            boxPadding: 4,
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: chartGridColor(), drawBorder: false },
+            ticks: { color: chartTextColor(), maxTicksLimit: 7, font: { size: 10 } },
+          },
+          y: {
+            grid: { color: chartGridColor(), drawBorder: false },
+            ticks: { color: chartTextColor(), precision: 0, font: { size: 10 } },
+            beginAtZero: true,
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Status Distribution (Doughnut)
+  const statusCtx = document.getElementById('statusDistributionChart');
+  if (statusCtx) {
+    const statusData = {
+      completed: {{ stats.successful_backups }},
+      failed: {{ stats.failed_backups }},
+      running: {{ stats.running_backups }},
+    };
+    const total = statusData.completed + statusData.failed + statusData.running;
+
+    if (total > 0) {
+      new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Successful', 'Failed', 'Running'],
+          datasets: [{
+            data: [statusData.completed, statusData.failed, statusData.running],
+            backgroundColor: [
+              'rgba(16,185,129,0.85)',
+              'rgba(239,68,68,0.85)',
+              'rgba(251,191,36,0.85)',
+            ],
+            borderColor: isDark ? 'rgba(31,41,55,0.8)' : 'rgba(255,255,255,0.8)',
+            borderWidth: 3,
+            hoverOffset: 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: chartTextColor(),
+                padding: 16,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                font: { size: 11 },
+              }
+            },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+              titleColor: isDark ? '#f3f4f6' : '#1e293b',
+              bodyColor: isDark ? '#d1d5db' : '#475569',
+              borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 12,
+              callbacks: {
+                label: function(ctx) {
+                  return ctx.label + ': ' + ctx.parsed + ' (' + Math.round(ctx.parsed / total * 100) + '%)';
+                }
+              }
+            }
+          },
+          animation: {
+            animateRotate: true,
+            duration: 1200,
+          }
+        }
+      });
+    } else {
+      statusCtx.parentElement.innerHTML = '<div class="chart-empty"><span data-i18n="no_backups">No backup data</span></div>';
+    }
+  }
+
+  // 3. Storage by Connection (Bar Chart)
+  const storageCtx = document.getElementById('storageChart');
+  if (storageCtx) {
+    const storageData = {{ storage_per_connection | tojson }};
+    if (storageData.length > 0) {
+      const colors = ['#818cf8', '#34d399', '#fbbf24', '#f87171', '#38bdf8', '#c084fc', '#fb923c', '#a78bfa'];
+      new Chart(storageCtx, {
+        type: 'bar',
+        data: {
+          labels: storageData.map(d => d.name),
+          datasets: [{
+            label: 'Storage (MB)',
+            data: storageData.map(d => d.total_size_mb),
+            backgroundColor: storageData.map((_, i) => colors[i % colors.length] + 'CC'),
+            borderColor: storageData.map((_, i) => colors[i % colors.length]),
+            borderWidth: 1,
+            borderRadius: 4,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+              titleColor: isDark ? '#f3f4f6' : '#1e293b',
+              bodyColor: isDark ? '#d1d5db' : '#475569',
+              borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 12,
+              callbacks: {
+                label: function(ctx) {
+                  const d = storageData[ctx.dataIndex];
+                  return d.total_size_mb + ' MB (' + d.count + ' backups)';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: chartTextColor(), font: { size: 10 } },
+            },
+            y: {
+              grid: { color: chartGridColor(), drawBorder: false },
+              ticks: { color: chartTextColor(), font: { size: 10 } },
+              beginAtZero: true,
+            }
+          },
+          animation: { duration: 1000 },
+        }
+      });
+    }
+  }
+
+  // 4. Schedule Types (Doughnut)
+  const scheduleCtx = document.getElementById('scheduleChart');
+  if (scheduleCtx) {
+    const scheduleData = {{ schedule_types | tojson }};
+    if (scheduleData.length > 0) {
+      const typeLabels = {
+        'interval': 'Interval',
+        'hourly': 'Hourly',
+        'daily': 'Daily',
+        'weekly': 'Weekly',
+        'monthly': 'Monthly',
+      };
+      const typeColors = {
+        'interval': 'rgba(99,102,241,0.85)',
+        'hourly': 'rgba(16,185,129,0.85)',
+        'daily': 'rgba(251,191,36,0.85)',
+        'weekly': 'rgba(239,68,68,0.85)',
+        'monthly': 'rgba(168,85,247,0.85)',
+      };
+      new Chart(scheduleCtx, {
+        type: 'polarArea',
+        data: {
+          labels: scheduleData.map(d => typeLabels[d.type] || d.type.charAt(0).toUpperCase() + d.type.slice(1)),
+          datasets: [{
+            data: scheduleData.map(d => d.count),
+            backgroundColor: scheduleData.map(d => typeColors[d.type] || 'rgba(156,163,175,0.85)'),
+            borderColor: isDark ? 'rgba(31,41,55,0.8)' : 'rgba(255,255,255,0.8)',
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: chartTextColor(),
+                padding: 16,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                font: { size: 11 },
+              }
+            },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+              titleColor: isDark ? '#f3f4f6' : '#1e293b',
+              bodyColor: isDark ? '#d1d5db' : '#475569',
+              borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 12,
+            }
+          },
+          animation: { duration: 1000 },
+        }
+      });
+    }
+  }
+
+  // ─── Theme change listener for charts ───
+  document.addEventListener('theme-changed', function() {
+    location.reload();
+  });
+})();
+</script>
 {% endblock %}

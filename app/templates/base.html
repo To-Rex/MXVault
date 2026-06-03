@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" x-data="{ theme: localStorage.getItem('theme') || 'dark', sidebarOpen: true, mobileSidebar: false, scrolled: false }" :class="theme">
+<html lang="en" x-data="{ theme: localStorage.getItem('theme') || 'dark', sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false', mobileSidebar: false, scrolled: false }" :class="theme">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,8 +13,6 @@
   <script src="/static/js/i18n.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .sidebar-scroll::-webkit-scrollbar { width: 3px; }
-    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 99px; }
   </style>
   {% block extra_head %}{% endblock %}
 </head>
@@ -25,27 +23,38 @@
 
     <!-- Mobile Backdrop -->
     <div x-cloak x-show="mobileSidebar" @click="mobileSidebar = false"
-         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden animate-fade-in"></div>
+         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden animate-fade-in"></div>
 
     <!-- Sidebar -->
-    <aside :class="mobileSidebar ? 'translate-x-0' : '-translate-x-full'"
-           class="fixed lg:static inset-y-0 left-0 z-50 w-64
-                  bg-gray-800/80 backdrop-blur-xl border-r border-gray-700/30
+    <aside :data-collapsed="!sidebarOpen"
+           :class="{
+             'translate-x-0': mobileSidebar,
+             '-translate-x-full': !mobileSidebar,
+             'w-64': sidebarOpen,
+             'w-16': !sidebarOpen,
+           }"
+           class="fixed lg:static inset-y-0 left-0 z-50
+                  bg-gray-900/95 backdrop-blur-2xl
+                  border-r border-white/[0.04]
                   transform transition-all duration-300 ease-out
-                  lg:translate-x-0 overflow-y-auto sidebar-scroll">
+                  lg:translate-x-0 overflow-hidden
+                  flex flex-col sidebar-main">
 
-      <!-- Logo -->
-      <div class="flex items-center gap-3 px-5 h-16 border-b border-gray-700/20">
-        <div class="w-9 h-9 rounded-xl bg-indigo-600
+      <!-- Logo Area -->
+      <div class="flex items-center h-16 px-4 border-b border-white/[0.04] shrink-0 gap-3"
+           :class="sidebarOpen ? 'justify-start' : 'justify-center'">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600
                     flex items-center justify-center text-white font-bold text-sm
-                    shadow-lg shadow-indigo-500/20 animate-float">
+                    shadow-lg shadow-indigo-500/25 shrink-0
+                    transition-transform duration-300 hover:scale-105">
           M
         </div>
-        <span class="text-lg font-bold text-white">MXVault</span>
+        <span x-show="sidebarOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-x-2" x-transition:enter-end="opacity-100 translate-x-0"
+              class="text-base font-bold text-white tracking-tight whitespace-nowrap sidebar-logo-text">MXVault</span>
       </div>
 
       <!-- Navigation -->
-      <nav class="p-3 space-y-0.5 mt-2">
+      <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto sidebar-scroll">
         {% set nav_items = [
           ('/dashboard', 'Dashboard', 'nav_dashboard', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'),
           ('/connections', 'Connections', 'nav_connections', 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4'),
@@ -58,52 +67,79 @@
         ] %}
         {% for href, label, i18n_key, icon_path in nav_items %}
         <a href="{{ href }}"
+           :class="{
+             'active': window.location.pathname.startsWith('{{ href.split('?')[0] }}') || (window.location.pathname === '/' && '{{ href }}' === '/dashboard'),
+             'sidebar-expanded': sidebarOpen,
+             'sidebar-collapsed': !sidebarOpen
+           }"
            class="sidebar-link group"
-           :class="{ 'active': window.location.pathname.startsWith('{{ href.split('?')[0] }}') || (window.location.pathname === '/' && '{{ href }}' === '/dashboard') }">
-          <svg class="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           :title="!sidebarOpen ? '{{ label|e }}' : ''">
+          <svg class="w-5 h-5 shrink-0 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ icon_path }}"/>
           </svg>
-          <span data-i18n="{{ i18n_key }}">{{ label }}</span>
+          <span x-show="sidebarOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-x-1" x-transition:enter-end="opacity-100 translate-x-0"
+                class="sidebar-link-text" data-i18n="{{ i18n_key }}">{{ label }}</span>
         </a>
         {% endfor %}
       </nav>
 
-      <!-- User Footer -->
-      <div class="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-700/20 bg-gray-800/60 backdrop-blur-xl">
-        <a href="/auth/profile" class="sidebar-link group">
-          <div class="w-8 h-8 rounded-xl bg-indigo-500/20
-                      flex items-center justify-center text-xs font-bold text-indigo-400
-                      transition-transform duration-200 group-hover:scale-110">
-            {{ user.username[:2].upper() }}
+      <!-- Bottom Section -->
+      <div class="border-t border-white/[0.04] bg-white/[0.015] shrink-0">
+        <!-- User Profile + Logout -->
+        <div class="sidebar-link group"
+             :class="sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'"
+             :title="!sidebarOpen ? '{{ user.display_name or user.username }}' : ''">
+          <div class="flex items-center gap-3 flex-1 min-w-0"
+               :class="sidebarOpen ? '' : 'flex-col'">
+            <a href="/auth/profile" class="shrink-0">
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20
+                          flex items-center justify-center text-xs font-bold text-indigo-400
+                          shrink-0 transition-transform duration-200 hover:scale-110">
+                {{ user.username[:2].upper() }}
+              </div>
+            </a>
+            <div x-show="sidebarOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-x-1" x-transition:enter-end="opacity-100 translate-x-0"
+                 class="flex-1 min-w-0 sidebar-link-text">
+              <p class="text-sm font-medium text-gray-200 truncate">{{ user.display_name or user.username }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+            </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-200 truncate">{{ user.display_name or user.username }}</p>
-            <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
-          </div>
-        </a>
-        <form method="post" action="/auth/logout" class="mt-1">
-          <button type="submit" class="sidebar-link w-full text-gray-500 hover:text-red-400 group">
-            <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-            <span data-i18n="nav_logout">Logout</span>
-          </button>
-        </form>
+          <!-- Logout icon button -->
+          <form method="post" action="/auth/logout" class="shrink-0">
+            <button type="submit"
+                    class="sidebar-logout-btn"
+                    :title="sidebarOpen ? 'Logout' : 'Logout'">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+            </button>
+          </form>
+        </div>
       </div>
     </aside>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 transition-all duration-300">
 
       <!-- Header -->
-      <header :class="scrolled ? 'bg-gray-900/80 backdrop-blur-xl border-b border-gray-700/20 shadow-lg shadow-black/5' : 'bg-transparent'"
+      <header :class="scrolled ? 'header-scrolled' : 'bg-transparent'"
               class="sticky top-0 z-30 px-4 lg:px-6 h-16 flex items-center justify-between transition-all duration-300">
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <!-- Mobile menu button -->
           <button @click="mobileSidebar = !mobileSidebar"
                   class="lg:hidden p-2 rounded-xl hover:bg-gray-700/50 transition-all duration-200 text-gray-400 hover:text-white">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <!-- Desktop sidebar toggle -->
+          <button @click="sidebarOpen = !sidebarOpen; localStorage.setItem('sidebarOpen', sidebarOpen)"
+                  class="hidden lg:flex p-2 rounded-xl transition-all duration-200 header-toggle-btn"
+                  :title="sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'">
+            <svg class="w-5 h-5 transition-transform duration-300" :class="sidebarOpen ? '' : 'rotate-180'"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
             </svg>
           </button>
           <h1 class="page-title text-lg">{% block page_title %}{% endblock %}</h1>
