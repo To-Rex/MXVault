@@ -26,6 +26,19 @@
       </div>
     </div>
 
+    {% set tg_status = request.query_params.get('tg_status') %}
+    {% if tg_status == 'success' %}
+    <div class="mb-5 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center gap-2">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      Test message sent successfully! Check your Telegram.
+    </div>
+    {% elif tg_status == 'error' %}
+    <div class="mb-5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300 flex items-center gap-2">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      Failed to send test message. Check Bot Token and Chat ID.
+    </div>
+    {% endif %}
+
     <!-- Telegram Setup Guide -->
     <div class="mb-5">
       <button type="button" onclick="document.getElementById('telegramGuide').classList.toggle('hidden')" class="flex items-center gap-2 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
@@ -70,6 +83,23 @@
 
   <!-- Email -->
   <div x-show="activeTab === 'email'" class="space-y-4 stagger-2">
+
+    {% set email_status = request.query_params.get('email_status') %}
+    {% if email_status == 'success' %}
+    <div class="glass-card p-5 max-w-2xl !bg-emerald-500/10 !border-emerald-500/20">
+      <div class="flex items-center gap-2 text-xs text-emerald-300">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        Test email sent successfully! Check your inbox.
+      </div>
+    </div>
+    {% elif email_status == 'error' %}
+    <div class="glass-card p-5 max-w-2xl !bg-red-500/10 !border-red-500/20">
+      <div class="flex items-center gap-2 text-xs text-red-300">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        Failed to send test email. Check SMTP settings and App Password.
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Email Setup Guide -->
     <div class="glass-card p-5 max-w-2xl">
@@ -190,18 +220,23 @@
 
     <!-- Add New Account Form -->
     <div class="glass-card p-5 max-w-2xl">
-      <div class="flex items-center gap-3 mb-5 pb-3 border-b border-gray-700/20">
-        <div class="w-9 h-9 rounded-xl bg-rose-500/10 flex items-center justify-center">
+      <button type="button" onclick="document.getElementById('addEmailForm').classList.toggle('hidden')" class="w-full flex items-center gap-3 text-left cursor-pointer group">
+        <div class="w-9 h-9 rounded-xl bg-rose-500/10 flex items-center justify-center group-hover:bg-rose-500/20 transition-colors">
           <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
           </svg>
         </div>
         <div>
-          <h3 class="text-sm font-semibold text-gray-300">Add Email Account</h3>
+          <h3 class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Add Email Account</h3>
           <p class="text-xs text-gray-500">Add another SMTP sender and its recipients</p>
         </div>
-      </div>
-      <form method="post" action="/settings/email/add" class="space-y-4">
+        <svg class="w-4 h-4 text-gray-500 ml-auto group-hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div id="addEmailForm" class="hidden">
+        <div class="border-t border-gray-700/20 my-5"></div>
+        <form method="post" action="/settings/email/add" class="space-y-4">
         <div>
           <label class="label">Account Name</label>
           <input type="text" name="name" class="input" placeholder="My Gmail">
@@ -250,7 +285,46 @@
         </div>
         <button type="submit" class="btn btn-primary">Add Email Account</button>
       </form>
+      </div>
     </div>
+
+    <!-- Email Template Editor -->
+    <div class="glass-card p-5 max-w-2xl">
+      <button type="button" onclick="document.getElementById('templateEditor').classList.toggle('hidden')" class="w-full flex items-center gap-3 text-left cursor-pointer group">
+        <div class="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
+          <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Email Template</h3>
+          <p class="text-xs text-gray-500">Customize the HTML email design for notifications</p>
+        </div>
+        <svg class="w-4 h-4 text-gray-500 ml-auto group-hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div id="templateEditor" class="hidden">
+        <div class="border-t border-gray-700/20 my-5"></div>
+        {% set tpl_status = request.query_params.get('email_tpl_status') %}
+        {% if tpl_status == 'success' %}
+        <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Email template saved.
+        </div>
+        {% endif %}
+        <p class="text-xs text-gray-500 mb-3">Use <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-violet-300">{{ "{{ app_name }}" }}</code>, <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-violet-300">{{ "{{ title }}" }}</code>, <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-violet-300">{{ "{{ body }}" }}</code>, <code class="px-1.5 py-0.5 rounded bg-gray-700/50 text-violet-300">{{ "{{ timestamp }}" }}</code> as placeholders.</p>
+        <form method="post" action="/settings/email/template" class="space-y-4">
+          <textarea name="template" class="input font-mono text-xs" rows="18" style="resize:vertical;">{{ email_template | safe }}</textarea>
+          <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary">Save Template</button>
+            <button type="button" onclick="this.form.elements.template.value = document.getElementById('defaultEmailTemplate').textContent" class="btn btn-ghost btn-sm">Reset to Default</button>
+          </div>
+        </form>
+        <script id="defaultEmailTemplate" type="text/plain" class="hidden">{{ default_template | safe }}</script>
+      </div>
+    </div>
+
   </div>
 
   <!-- Local Storage -->

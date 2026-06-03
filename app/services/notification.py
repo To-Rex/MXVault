@@ -11,6 +11,54 @@ from app.utils.crypto import decrypt_password, encrypt_password
 
 logger = logging.getLogger("mxvault.notification")
 
+DEFAULT_EMAIL_TEMPLATE = """\
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#0f0f1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div style="max-width:560px;margin:30px auto;background:linear-gradient(145deg,#1a1a2e 0%,#16213e 100%);border:1px solid rgba(99,102,241,0.2);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+  <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 30px;text-align:center;">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px;">{{ app_name }}</h1>
+    <p style="margin:6px 0 0;color:rgba(255,255,255,0.7);font-size:13px;">Database Backup Management</p>
+  </div>
+  <div style="padding:24px 30px 8px;">
+    <h2 style="margin:0 0 12px;color:#e2e8f0;font-size:16px;font-weight:600;">{{ title }}</h2>
+    <div style="color:#cbd5e1;font-size:14px;line-height:1.7;">
+      {{ body }}
+    </div>
+  </div>
+  <div style="padding:12px 30px 24px;border-top:1px solid rgba(255,255,255,0.06);margin-top:8px;">
+    <p style="margin:0;color:#64748b;font-size:11px;">{{ timestamp }} &bull; MXVault</p>
+  </div>
+</div>
+</body>
+</html>"""
+
+
+def get_email_template(db: Session) -> str:
+    setting = db.query(AppSetting).filter(AppSetting.key == "email_template").first()
+    return setting.value if setting and setting.value else DEFAULT_EMAIL_TEMPLATE
+
+
+def save_email_template(db: Session, template: str):
+    setting = db.query(AppSetting).filter(AppSetting.key == "email_template").first()
+    if setting:
+        setting.value = template
+    else:
+        setting = AppSetting(id=str(uuid4()), key="email_template", value=template)
+        db.add(setting)
+    db.commit()
+
+
+def _apply_email_template(subject: str, body: str, template: str) -> str:
+    return template.replace("{{ app_name }}", "MXVault") \
+        .replace("{{ title }}", subject) \
+        .replace("{{ body }}", body) \
+        .replace("{{ timestamp }}", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
 
 def get_telegram_config(db: Session) -> dict:
     bot_token = db.query(AppSetting).filter(AppSetting.key == "telegram_bot_token").first()
@@ -182,28 +230,34 @@ def _send_email_via_account(account: dict, subject: str, body: str, filepath: st
 
 def send_email_message(db: Session, subject: str, body: str) -> bool:
     config = get_email_config(db)
+    template = get_email_template(db)
+    html_body = _apply_email_template(subject, body, template)
     any_sent = False
     for account in config.get("accounts", []):
-        if _send_email_via_account(account, subject, body):
+        if _send_email_via_account(account, subject, html_body):
             any_sent = True
     return any_sent
 
 
 def send_email_with_attachment(db: Session, subject: str, body: str, filepath: str) -> bool:
     config = get_email_config(db)
+    template = get_email_template(db)
+    html_body = _apply_email_template(subject, body, template)
     any_sent = False
     for account in config.get("accounts", []):
-        if _send_email_via_account(account, subject, body, filepath):
+        if _send_email_via_account(account, subject, html_body, filepath):
             any_sent = True
     return any_sent
 
 
 def send_email_with_attachment_for_accounts(db: Session, subject: str, body: str, filepath: str) -> bool:
     config = get_email_config(db)
+    template = get_email_template(db)
+    html_body = _apply_email_template(subject, body, template)
     any_sent = False
     for account in config.get("accounts", []):
         if account.get("send_file", True):
-            if _send_email_via_account(account, subject, body, filepath):
+            if _send_email_via_account(account, subject, html_body, filepath):
                 any_sent = True
     return any_sent
 

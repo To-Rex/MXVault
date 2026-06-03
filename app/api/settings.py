@@ -7,13 +7,17 @@ from app.dependencies import get_admin_user, get_current_user
 from app.models.user import User
 from app.services.audit import log_audit
 from app.services.notification import (
+    _send_email_via_account,
     delete_email_account,
     get_email_config,
+    get_email_template,
     get_telegram_config,
     save_email_account,
+    save_email_template,
     save_telegram_config,
 )
 from app.templates import templates
+from app.utils.crypto import encrypt_password
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -26,6 +30,9 @@ def settings_page(request: Request, db: Session = Depends(get_db), user: User = 
 
     telegram_config = get_telegram_config(db)
     email_config = get_email_config(db)
+    email_template = get_email_template(db)
+    from app.services.notification import DEFAULT_EMAIL_TEMPLATE
+    default_template = DEFAULT_EMAIL_TEMPLATE
     # Decrypt passwords for display
     from app.utils.crypto import decrypt_password
     for acc in email_config.get("accounts", []):
@@ -60,6 +67,8 @@ def settings_page(request: Request, db: Session = Depends(get_db), user: User = 
         "user": user,
         "telegram": telegram_config,
         "email": email_config,
+        "email_template": email_template,
+        "default_template": default_template,
         "local_config": local_config,
         "gdrive_config": gdrive_config,
         "yandex_config": yandex_config,
@@ -69,6 +78,7 @@ def settings_page(request: Request, db: Session = Depends(get_db), user: User = 
 
 @router.post("/telegram")
 def update_telegram(
+    request: Request,
     bot_token: str = Form(""),
     chat_id: str = Form(""),
     enabled: bool = Form(False),
@@ -78,7 +88,12 @@ def update_telegram(
 ):
     save_telegram_config(db, bot_token, chat_id, enabled, send_file)
     log_audit(db, action="settings_telegram_updated", user_id=user.id, username=user.username)
-    return RedirectResponse(url="/settings", status_code=302)
+
+    test_msg = "✅ <b>MXVault</b>\nTelegram integration is working!\nBackup notifications will be sent here."
+    from app.services.notification import send_telegram_message
+    ok = send_telegram_message(db, test_msg)
+    status = "success" if ok else "error"
+    return RedirectResponse(url=f"/settings?tg_status={status}", status_code=302)
 
 
 @router.post("/email/add")
@@ -98,7 +113,23 @@ def add_email_account(
 ):
     save_email_account(db, None, name, smtp_host, smtp_port, smtp_user, smtp_pass, from_addr, to_addresses, enabled, use_tls, send_file)
     log_audit(db, action="settings_email_added", user_id=user.id, username=user.username)
-    return RedirectResponse(url="/settings", status_code=302)
+
+    to_list = [a.strip() for a in to_addresses.replace(",", "\n").split("\n") if a.strip()]
+    test_account = {
+        "name": name,
+        "smtp_host": smtp_host,
+        "smtp_port": smtp_port,
+        "smtp_user": smtp_user,
+        "encrypted_pass": encrypt_password(smtp_pass) if smtp_pass else "",
+        "from_addr": from_addr or smtp_user,
+        "to_addresses": to_list,
+        "use_tls": use_tls,
+        "enabled": True,
+    }
+    ok = _send_email_via_account(test_account, "MXVault: Test Email",
+        "<b>MXVault</b><br>Email integration is working!<br>Backup notifications will be sent to this address.")
+    status = "success" if ok else "error"
+    return RedirectResponse(url=f"/settings?email_status={status}", status_code=302)
 
 
 @router.post("/email/update")
@@ -119,7 +150,30 @@ def update_email_account(
 ):
     save_email_account(db, account_id, name, smtp_host, smtp_port, smtp_user, smtp_pass, from_addr, to_addresses, enabled, use_tls, send_file)
     log_audit(db, action="settings_email_updated", user_id=user.id, username=user.username)
-    return RedirectResponse(url="/settings", status_code=302)
+
+    to_list = [a.strip() for a in to_addresses.replace(",", "\n").split("\n") if a.strip()]
+    encrypted_pass = encrypt_password(smtp_pass) if smtp_pass else ""
+    if not smtp_pass:
+        config = get_email_config(db)
+        for acc in config["accounts"]:
+            if acc["id"] == account_id:
+                encrypted_pass = acc.get("encrypted_pass", "")
+                break
+    test_account = {
+        "name": name,
+        "smtp_host": smtp_host,
+        "smtp_port": smtp_port,
+        "smtp_user": smtp_user,
+        "encrypted_pass": encrypted_pass,
+        "from_addr": from_addr or smtp_user,
+        "to_addresses": to_list,
+        "use_tls": use_tls,
+        "enabled": True,
+    }
+    ok = _send_email_via_account(test_account, "MXVault: Test Email",
+        "<b>MXVault</b><br>Email integration is working!<br>Backup notifications will be sent to this address.")
+    status = "success" if ok else "error"
+    return RedirectResponse(url=f"/settings?email_status={status}", status_code=302)
 
 
 @router.post("/email/delete")
@@ -131,6 +185,17 @@ def delete_email_account_route(
     delete_email_account(db, account_id)
     log_audit(db, action="settings_email_deleted", user_id=user.id, username=user.username)
     return RedirectResponse(url="/settings", status_code=302)
+
+
+@router.post("/email/template")
+def update_email_template(
+    template: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    save_email_template(db, template)
+    log_audit(db, action="settings_email_template_updated", user_id=user.id, username=user.username)
+    return RedirectResponse(url="/settings?email_tpl_status=success", status_code=302)
 
 
 @router.post("/local-storage")
