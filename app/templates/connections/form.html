@@ -2,6 +2,7 @@
 {% block title %}{% if connection %}Edit{% else %}New{% endif %} Connection{% endblock %}
 {% block page_title %}{% if connection %}Edit Connection{% else %}New Connection{% endif %}{% endblock %}
 {% block content %}
+{% set fd = form_data or {} %}
 <div class="max-w-2xl mx-auto stagger-1">
   <div class="glass-card p-6">
     <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-700/20">
@@ -16,29 +17,36 @@
       </div>
     </div>
 
-    <form method="post" action="{% if connection %}/connections/{{ connection.id }}/edit{% else %}/connections/new{% endif %}" class="space-y-4">
+    {% if error %}
+    <div class="mb-5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300 flex items-center gap-2">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form id="connForm" method="post" action="{% if connection %}/connections/{{ connection.id }}/edit{% else %}/connections/new{% endif %}" class="space-y-4">
       <div>
         <label class="label">Connection Name</label>
-        <input type="text" name="name" required class="input" placeholder="e.g. Production Database" value="{{ connection.name if connection else '' }}">
+        <input type="text" name="name" required class="input" placeholder="e.g. Production Database" value="{{ connection.name if connection else fd.get('name', '') }}">
       </div>
       <div class="grid grid-cols-3 gap-4">
         <div class="col-span-2">
           <label class="label">Host</label>
-          <input type="text" name="host" required class="input" placeholder="localhost or IP" value="{{ connection.host if connection else '' }}">
+          <input type="text" name="host" id="hostInput" required class="input" placeholder="localhost or IP" value="{{ connection.host if connection else fd.get('host', '') }}">
         </div>
         <div>
           <label class="label">Port</label>
-          <input type="number" name="port" required class="input" value="{{ connection.port if connection else '5432' }}">
+          <input type="number" name="port" id="portInput" required class="input" value="{{ connection.port if connection else fd.get('port', '5432') }}">
         </div>
       </div>
       <div>
         <label class="label">Database</label>
-        <input type="text" name="database" required class="input" placeholder="my_database" value="{{ connection.database if connection else '' }}">
+        <input type="text" name="database" required class="input" placeholder="my_database" value="{{ connection.database if connection else fd.get('database', '') }}">
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="label">Username</label>
-          <input type="text" name="username" required class="input" placeholder="postgres" value="{{ connection.username if connection else '' }}">
+          <input type="text" name="username" required class="input" placeholder="postgres" value="{{ connection.username if connection else fd.get('username', '') }}">
         </div>
         <div>
           <label class="label">Password</label>
@@ -48,12 +56,24 @@
       <div>
         <label class="label">SSL Mode</label>
         <select name="ssl_mode" class="select">
-          <option value="prefer" {% if connection and connection.ssl_mode == 'prefer' %}selected{% endif %}>Prefer</option>
-          <option value="require" {% if connection and connection.ssl_mode == 'require' %}selected{% endif %}>Require</option>
-          <option value="disable" {% if connection and connection.ssl_mode == 'disable' %}selected{% endif %}>Disable</option>
-          <option value="allow" {% if connection and connection.ssl_mode == 'allow' %}selected{% endif %}>Allow</option>
+          <option value="prefer" {% if connection and connection.ssl_mode == 'prefer' %}selected{% elif fd.get('ssl_mode') == 'prefer' %}selected{% endif %}>Prefer</option>
+          <option value="require" {% if connection and connection.ssl_mode == 'require' %}selected{% elif fd.get('ssl_mode') == 'require' %}selected{% endif %}>Require</option>
+          <option value="disable" {% if connection and connection.ssl_mode == 'disable' %}selected{% elif fd.get('ssl_mode') == 'disable' %}selected{% endif %}>Disable</option>
+          <option value="allow" {% if connection and connection.ssl_mode == 'allow' %}selected{% elif fd.get('ssl_mode') == 'allow' %}selected{% endif %}>Allow</option>
         </select>
       </div>
+
+      {% if not connection %}
+      <div class="border-t border-gray-700/20 pt-4">
+        <div id="testResult" class="hidden mb-3 px-4 py-3 rounded-xl text-xs flex items-center gap-2"></div>
+        <button type="button" id="testBtn" onclick="testConnection()" class="btn btn-secondary btn-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Test Connection
+        </button>
+      </div>
+      {% endif %}
 
       <div class="flex items-center gap-3 pt-4 border-t border-gray-700/20">
         <button type="submit" class="btn btn-primary">
@@ -64,4 +84,58 @@
     </form>
   </div>
 </div>
+{% endblock %}
+{% block extra_scripts %}
+{% if not connection %}
+<script>
+async function testConnection() {
+  var btn = document.getElementById('testBtn');
+  var resultDiv = document.getElementById('testResult');
+  var host = document.getElementById('hostInput').value;
+  var port = document.getElementById('portInput').value;
+  var database = document.querySelector('[name=database]').value || 'postgres';
+  var username = document.querySelector('[name=username]').value || 'postgres';
+  var password = document.querySelector('[name=password]').value || '';
+
+  if (!host || !port) {
+    resultDiv.className = 'mb-3 px-4 py-3 rounded-xl text-xs flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-300';
+    resultDiv.innerHTML = '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Please enter Host and Port first.';
+    resultDiv.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full"></span> Testing...';
+  resultDiv.classList.add('hidden');
+
+  try {
+    var formData = new FormData();
+    formData.append('host', host);
+    formData.append('port', port);
+    formData.append('database', database);
+    formData.append('username', username);
+    formData.append('password', password);
+
+    var resp = await fetch('/connections/test-new', { method: 'POST', body: formData });
+    var data = await resp.json();
+
+    if (data.success) {
+      resultDiv.className = 'mb-3 px-4 py-3 rounded-xl text-xs flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300';
+      resultDiv.innerHTML = '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> ' + data.message + ' (' + data.latency_ms + 'ms)';
+    } else {
+      resultDiv.className = 'mb-3 px-4 py-3 rounded-xl text-xs flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-300';
+      resultDiv.innerHTML = '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> ' + data.message;
+    }
+    resultDiv.classList.remove('hidden');
+  } catch (e) {
+    resultDiv.className = 'mb-3 px-4 py-3 rounded-xl text-xs flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-300';
+    resultDiv.innerHTML = '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Network error: could not reach server.';
+    resultDiv.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Test Connection';
+  }
+}
+</script>
+{% endif %}
 {% endblock %}

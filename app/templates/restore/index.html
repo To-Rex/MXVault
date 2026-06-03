@@ -2,7 +2,7 @@
 {% block title %}Restore{% endblock %}
 {% block page_title %}Restore Database{% endblock %}
 {% block content %}
-<div class="max-w-3xl mx-auto stagger-1">
+<div class="max-w-3xl mx-auto stagger-1" x-data="{ source: 'history' }">
   <div class="glass-card p-6">
     <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-700/20">
       <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
@@ -12,19 +12,38 @@
       </div>
       <div>
         <h3 class="text-sm font-semibold text-gray-300">Restore from Backup</h3>
-        <p class="text-xs text-gray-500">Select a backup and target database to restore. This will overwrite the target database.</p>
+        <p class="text-xs text-gray-500">Select from history, cloud storage, or upload a backup file from your computer.</p>
       </div>
     </div>
-    <form method="post" action="/restore/run" onsubmit="return confirm('WARNING: This will overwrite the target database. Are you sure you want to proceed?')" class="space-y-5">
-      <div>
+
+    <!-- Source Tabs -->
+    <div class="flex gap-1 mb-5 p-1 rounded-xl bg-gray-700/20">
+      <button type="button" @click="source = 'history'" :class="source === 'history' ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-500 hover:text-gray-300'" class="flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200">Backup History</button>
+      <button type="button" @click="source = 'upload'" :class="source === 'upload' ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-500 hover:text-gray-300'" class="flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200">Upload File</button>
+    </div>
+
+    <form method="post" action="/restore/run" enctype="multipart/form-data" onsubmit="return confirm('WARNING: This will overwrite the target database. Are you sure you want to proceed?')" class="space-y-5">
+      <div x-show="source === 'history'">
         <label class="label">Select Backup</label>
-        <select name="backup_id" required class="select">
+        <select name="backup_id" class="select">
           <option value="">Choose a backup...</option>
           {% for b in backups %}
-          <option value="{{ b.id }}">{{ b.database_name }} — {{ b.filename }} ({{ (b.file_size_bytes / 1048576)|round(2) if b.file_size_bytes else 0 }} MB)</option>
+          <option value="{{ b.id }}">
+            [{{ b.created_at.strftime('%Y-%m-%d %H:%M') }}] {{ b.database_name }} — {{ b.filename }} ({{ (b.file_size_bytes / 1048576)|round(2) if b.file_size_bytes else 0 }} MB)
+            {% if b.destination_path and 'yandex://' in b.destination_path %}☁️ Yandex{% elif b.destination_path and 'google_drive://' in b.destination_path %}☁️ Drive{% else %}💾 Local{% endif %}
+          </option>
           {% endfor %}
         </select>
       </div>
+
+      <div x-show="source === 'upload'">
+        <label class="label">Upload Backup File (.dump)</label>
+        <div class="relative">
+          <input type="file" name="upload_file" accept=".dump,.sql,.gz,.tar" class="block w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 file:transition-colors file:cursor-pointer cursor-pointer">
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Supports .dump (pg_dump custom format), .sql, .tar, and .gz files.</p>
+      </div>
+
       <div>
         <label class="label">Target Connection</label>
         <select name="target_connection_id" required class="select">

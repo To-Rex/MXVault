@@ -77,5 +77,14 @@ class LocalStorageProvider(BaseStorageProvider):
                         })
         return sorted(files, key=lambda x: x["modified_at"], reverse=True)
 
+    def download(self, path: str, dest_path: str) -> bool:
+        try:
+            if os.path.exists(path):
+                shutil.copy2(path, dest_path)
+                return True
+            return False
+        except OSError:
+            return False
+
     def verify(self, path: str) -> bool:
         return os.path.exists(path)

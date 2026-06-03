@@ -23,6 +23,11 @@ class BaseStorageProvider(ABC):
     def list_files(self, prefix: str = "") -> list[dict]: ...
 
     @abstractmethod
+    def download(self, path: str, dest_path: str) -> bool:
+        """Download a file from remote storage to a local path. Returns True on success."""
+        ...
+
+    @abstractmethod
     def verify(self, path: str) -> bool: ...
 
 

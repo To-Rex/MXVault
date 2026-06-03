@@ -3,9 +3,9 @@
 {% block page_title %}Backups{% endblock %}
 {% block content %}
 <!-- Filters -->
-<div class="glass-card p-4 mb-6 stagger-1">
+<div class="glass-card p-4 mb-4 stagger-1">
   <form class="flex flex-wrap items-center gap-3" method="get" action="/backups">
-    <div class="relative flex-1 min-w-[200px] max-w-[300px]">
+    <div class="relative flex-1 min-w-[180px] max-w-[240px]">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
       </svg>
@@ -28,6 +28,17 @@
     <a href="/backups" class="btn btn-ghost btn-sm">Clear</a>
   </form>
 </div>
+
+<!-- Database Filter Chips -->
+{% if databases %}
+<div class="flex flex-wrap items-center gap-2 mb-4 stagger-2">
+  <span class="text-xs text-gray-500 mr-1">DB:</span>
+  <a href="/backups?page=1&per_page={{ per_page }}{% if filter_connection_id %}&connection_id={{ filter_connection_id }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 {% if not filter_database %}bg-indigo-500/20 text-indigo-300 shadow-sm{% else %}bg-gray-700/20 text-gray-400 hover:bg-gray-700/30 hover:text-gray-300{% endif %}">All</a>
+  {% for db_name in databases %}
+  <a href="/backups?page=1&per_page={{ per_page }}&database={{ db_name | urlencode }}{% if filter_connection_id %}&connection_id={{ filter_connection_id }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 {% if filter_database == db_name %}bg-indigo-500/20 text-indigo-300 shadow-sm ring-1 ring-indigo-500/30{% else %}bg-gray-700/20 text-gray-400 hover:bg-gray-700/30 hover:text-gray-300{% endif %}">{{ db_name }}</a>
+  {% endfor %}
+</div>
+{% endif %}
 
 {% if backups %}
 <!-- Bulk Actions -->
@@ -62,8 +73,7 @@
         <th class="table-header w-10">
           <input type="checkbox" onclick="toggleAll(this)" class="checkbox">
         </th>
-        <th class="table-header">Database</th>
-        <th class="table-header">Connection</th>
+        <th class="table-header">Database / Connection</th>
         <th class="table-header">Status</th>
         <th class="table-header">Size</th>
         <th class="table-header">Duration</th>
@@ -73,18 +83,33 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-700/10">
+      {% set db_colors = {
+          'indigo': 'border-l-indigo-500 from-indigo-500/20 to-purple-600/20 text-indigo-400',
+          'emerald': 'border-l-emerald-500 from-emerald-500/20 to-teal-600/20 text-emerald-400',
+          'amber': 'border-l-amber-500 from-amber-500/20 to-orange-600/20 text-amber-400',
+          'rose': 'border-l-rose-500 from-rose-500/20 to-pink-600/20 text-rose-400',
+          'violet': 'border-l-violet-500 from-violet-500/20 to-fuchsia-600/20 text-violet-400',
+          'cyan': 'border-l-cyan-500 from-cyan-500/20 to-blue-600/20 text-cyan-400',
+          'orange': 'border-l-orange-500 from-orange-500/20 to-yellow-600/20 text-orange-400',
+          'sky': 'border-l-sky-500 from-sky-500/20 to-indigo-600/20 text-sky-400',
+      } %}
+      {% set color_keys = ['indigo', 'emerald', 'amber', 'rose', 'violet', 'cyan', 'orange', 'sky'] %}
       {% for b in backups %}
-      <tr class="stagger-{{ loop.index }}" id="row-{{ b.id }}">
+      {% set color_name = color_keys[b.database_name | length % 8] %}
+      {% set color_classes = db_colors[color_name] %}
+      <tr class="stagger-{{ loop.index }} border-l-2 {{ color_classes.split()[0] }}" id="row-{{ b.id }}">
         <td class="table-cell">
           <input type="checkbox" value="{{ b.id }}" onchange="updateBulkBar()" class="checkbox backup-checkbox">
         </td>
         <td class="table-cell">
-          <a href="/backups/{{ b.id }}" class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-2 transition-colors">
-            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center text-xs font-bold text-indigo-400">{{ b.database_name[:2].upper() }}</div>
-            {{ b.database_name }}
+          <a href="/backups/{{ b.id }}" class="hover:opacity-80 transition-opacity flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br {{ color_classes.split(' ', 1)[1] if ' ' in color_classes else '' }} flex items-center justify-center text-sm font-bold shrink-0">{{ b.database_name[:2].upper() }}</div>
+            <div>
+              <p class="text-sm font-semibold text-gray-200 leading-tight">{{ b.database_name }}</p>
+              <p class="text-xs text-gray-500">{{ b.connection_name or '—' }}</p>
+            </div>
           </a>
         </td>
-        <td class="table-cell text-gray-500 text-xs">{{ b.connection_name or '—' }}</td>
         <td class="table-cell">
           {% if b.status == 'completed' or b.status == 'uploaded' %}
           <span class="badge badge-success"><span class="badge-dot success"></span>{{ b.status | capitalize }}</span>
@@ -119,15 +144,16 @@
   </table>
 </div>
 
+
 {% if total_pages > 1 %}
 <div class="flex items-center justify-between pt-4 stagger-4">
   <p class="text-sm text-gray-500">{{ total }} backup{{ 's' if total != 1 else '' }} total</p>
   <div class="flex gap-2">
     {% if page > 1 %}
-    <a href="/backups?page={{ page - 1 }}&per_page={{ per_page }}{% if filter_connection_id %}&connection_id={{ filter_connection_id }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="btn btn-ghost btn-sm">← Previous</a>
+    <a href="/backups?page={{ page - 1 }}&per_page={{ per_page }}{% if filter_connection_id %}&connection_id={{ filter_connection_id }}{% endif %}{% if filter_database %}&database={{ filter_database | urlencode }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="btn btn-ghost btn-sm">← Previous</a>
     {% endif %}
     {% if page < total_pages %}
-    <a href="/backups?page={{ page + 1 }}&per_page={{ per_page }}{% if filter_connection_id %}&connection_id={{ filter_connection_id }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="btn btn-ghost btn-sm">Next →</a>
+    <a href="/backups?page={{ page + 1 }}&per_page={{ per_page }}{% if filter_connection_id %}&connection_id={{ filter_connection_id }}{% endif %}{% if filter_database %}&database={{ filter_database | urlencode }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="btn btn-ghost btn-sm">Next →</a>
     {% endif %}
   </div>
 </div>

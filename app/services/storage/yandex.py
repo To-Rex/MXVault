@@ -108,6 +108,20 @@ class YandexDiskStorageProvider(BaseStorageProvider):
         except Exception:
             return []
 
+    def download(self, path: str, dest_path: str) -> bool:
+        config = self.get_config()
+        if not config.get("access_token"):
+            return False
+        try:
+            client = self._get_client()
+            if not client:
+                return False
+            remote_path = path.replace("yandex://", "")
+            client.download(remote_path, dest_path)
+            return os.path.exists(dest_path)
+        except Exception:
+            return False
+
     def verify(self, path: str) -> bool:
         config = self.get_config()
         if not config.get("access_token"):

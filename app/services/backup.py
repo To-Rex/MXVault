@@ -245,6 +245,7 @@ def get_backup_logs(
     connection_id: str | None = None,
     status: str | None = None,
     search: str | None = None,
+    database: str | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> tuple[list[BackupLog], int]:
@@ -253,6 +254,8 @@ def get_backup_logs(
         query = query.filter(BackupLog.connection_id == connection_id)
     if status:
         query = query.filter(BackupLog.status == status)
+    if database:
+        query = query.filter(BackupLog.database_name == database)
     if search:
         query = query.filter(
             BackupLog.database_name.contains(search) | BackupLog.connection_name.contains(search)

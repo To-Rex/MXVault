@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
@@ -7,7 +8,14 @@ from app.dependencies import get_current_user
 from app.models.connection import PGConnection
 from app.models.user import User
 from app.services.audit import log_audit
-from app.services.connection import create_connection, delete_connection, test_connection, update_connection
+from app.services.connection import (
+    _test_connection_raw,
+    _test_pg_connection,
+    create_connection,
+    delete_connection,
+    test_connection,
+    update_connection,
+)
 from app.templates import templates
 
 router = APIRouter(prefix="/connections", tags=["connections"])
@@ -37,13 +45,37 @@ def create_connection_route(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    result = _test_pg_connection(host, port, database, username, password)
+    if not result["success"]:
+        return templates.TemplateResponse(request, "connections/form.html", {
+            "request": request, "user": user,
+            "error": result["message"],
+            "form_data": {"name": name, "host": host, "port": port, "database": database, "username": username, "ssl_mode": ssl_mode},
+        })
+
     try:
         conn = create_connection(db, name, host, port, database, username, password, ssl_mode)
         log_audit(db, action="connection_created", user_id=user.id, username=user.username,
                   resource_type="connection", resource_id=conn.id, details=f"Connection '{name}' created")
         return RedirectResponse(url="/connections", status_code=302)
     except Exception as e:
-        return templates.TemplateResponse(request, "connections/form.html", {"request": request, "user": user, "error": str(e)})
+        return templates.TemplateResponse(request, "connections/form.html", {
+            "request": request, "user": user,
+            "error": str(e),
+            "form_data": {"name": name, "host": host, "port": port, "database": database, "username": username, "ssl_mode": ssl_mode},
+        })
+
+
+@router.post("/test-new")
+def test_new_connection(
+    host: str = Form(...),
+    port: int = Form(5432),
+    database: str = Form("postgres"),
+    username: str = Form("postgres"),
+    password: str = Form(""),
+    user: User = Depends(get_current_user),
+):
+    return _test_pg_connection(host, port, database, username, password)
 
 
 @router.get("/{connection_id}")
@@ -104,9 +136,15 @@ def test_connection_route(connection_id: str, db: Session = Depends(get_db), use
     conn = db.query(PGConnection).filter(PGConnection.id == connection_id).first()
     if not conn:
         raise HTTPException(status_code=404, detail="Connection not found")
-    result = test_connection(conn)
-    conn.last_tested_at = __import__("datetime").datetime.now()
-    db.commit()
+    try:
+        result = test_connection(conn)
+    except Exception as e:
+        result = {"success": False, "message": str(e)}
+    try:
+        conn.last_tested_at = datetime.now()
+        db.commit()
+    except Exception:
+        pass
     log_audit(db, action="connection_tested", user_id=user.id, username=user.username,
-              resource_type="connection", resource_id=connection_id, details=str(result["success"]))
+              resource_type="connection", resource_id=connection_id, details=str(result.get("success", False)))
     return result

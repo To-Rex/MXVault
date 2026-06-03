@@ -133,6 +133,29 @@ class GoogleDriveStorageProvider(BaseStorageProvider):
         except Exception:
             return []
 
+    def download(self, path: str, dest_path: str) -> bool:
+        config = self.get_config()
+        if not config.get("access_token"):
+            return False
+        try:
+            import requests
+
+            file_id = path.replace("google_drive://", "").split("/")[0]
+            headers = {"Authorization": f"Bearer {config['access_token']}"}
+            response = requests.get(
+                f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media",
+                headers=headers,
+                stream=True,
+            )
+            if response.status_code == 200:
+                with open(dest_path, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                return os.path.exists(dest_path)
+            return False
+        except Exception:
+            return False
+
     def verify(self, path: str) -> bool:
         config = self.get_config()
         if not config.get("access_token"):

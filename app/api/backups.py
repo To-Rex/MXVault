@@ -28,15 +28,17 @@ def list_backups(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     connection_id: str = Query(None),
+    database: str = Query(None),
     status: str = Query(None),
     search: str = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     offset = (page - 1) * per_page
-    items, total = get_backup_logs(db, connection_id=connection_id, status=status, search=search, limit=per_page, offset=offset)
+    items, total = get_backup_logs(db, connection_id=connection_id, status=status, search=search, database=database, limit=per_page, offset=offset)
     total_pages = max(1, (total + per_page - 1) // per_page)
     connections = db.query(PGConnection).order_by(PGConnection.name).all()
+    databases = [row[0] for row in db.query(BackupLog.database_name).distinct().order_by(BackupLog.database_name).all()]
 
     return templates.TemplateResponse(request, "backups/list.html", {
         "request": request,
@@ -47,7 +49,9 @@ def list_backups(
         "per_page": per_page,
         "total_pages": total_pages,
         "connections": connections,
+        "databases": databases,
         "filter_connection_id": connection_id,
+        "filter_database": database,
         "filter_status": status,
         "filter_search": search,
     })

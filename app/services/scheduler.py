@@ -141,6 +141,7 @@ def check_connections_health():
 
             if prev_state is None:
                 _connection_states[conn.id] = alive
+                conn.is_active = alive
             elif alive and not prev_state:
                 logger.info(f"Connection restored: {conn.name}")
                 conn.is_active = True
