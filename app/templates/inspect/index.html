@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Inspect Backup{% endblock %}
+{% block page_title %}Inspect Backup{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto stagger-1">
+  <div class="glass-card p-6 mb-6">
+    <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-700/20">
+      <div class="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-300">Inspect Backup File</h3>
+        <p class="text-xs text-gray-500">View tables and data inside a PostgreSQL dump file without restoring.</p>
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-300 flex items-start gap-2">
+      <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <div class="flex gap-1 mb-5 p-1 rounded-xl bg-gray-700/20" id="sourceTabs">
+      <button type="button" onclick="switchSource('upload')" data-tab="upload" class="tab-btn flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 bg-indigo-500/20 text-indigo-300">Upload File</button>
+      <button type="button" onclick="switchSource('history')" data-tab="history" class="tab-btn flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-300">Backup History</button>
+    </div>
+
+    <form method="post" action="/inspect/analyze" enctype="multipart/form-data" id="inspectForm" onsubmit="return validateForm()" class="space-y-4">
+      <div id="uploadSection">
+        <label class="label">Upload Backup File (.dump)</label>
+        <input type="file" name="upload_file" id="uploadFileInput" accept=".dump,.sql,.gz,.tar" class="block w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 file:transition-colors file:cursor-pointer cursor-pointer">
+      </div>
+      <div id="historySection" style="display:none">
+        <label class="label">Select from History</label>
+        <select name="backup_id" id="backupSelect" class="select">
+          <option value="">Choose a backup...</option>
+          {% for b in backups %}
+          <option value="{{ b.id }}">{{ b.database_name }} — {{ b.filename }} ({{ (b.file_size_bytes / 1048576)|round(2) if b.file_size_bytes else 0 }} MB)</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        Analyze File
+      </button>
+    </form>
+  </div>
+
+  {% if tables is defined or preview_data is defined %}
+  <div class="glass-card p-6 mb-6 stagger-2">
+    {% if not (preview_data is defined) %}
+    <div class="flex items-center gap-2 mb-4">
+      <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+      <h3 class="text-sm font-semibold text-gray-300">Tables ({{ tables | length }})</h3>
+      <span class="text-xs text-gray-500 ml-auto">{{ filename }}</span>
+    </div>
+    {% endif %}
+
+    {% if preview_data is defined %}
+    <div class="mb-4 pb-3 border-b border-gray-700/20">
+      <button type="button" onclick="history.back()" class="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors bg-transparent border-0 cursor-pointer p-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Tables
+      </button>
+      <div class="flex items-center gap-2 mt-2">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <h3 class="text-sm font-semibold text-gray-300">{{ preview_table }}</h3>
+        {% if preview_data.total_rows is defined %}
+        <span class="badge badge-neutral text-xs ml-2">{{ preview_data.total_rows }} row{{ 's' if preview_data.total_rows != 1 else '' }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if preview_data is defined %}
+      {% if preview_data.error %}
+      <div class="p-4 rounded-xl bg-red-500/5 border border-red-500/20 text-sm text-red-300">{{ preview_data.error }}</div>
+      {% elif preview_data.columns and preview_data.total_rows is defined %}
+      <div class="table-container max-h-96 overflow-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr>
+              <th class="table-header w-10 text-center">#</th>
+              {% for col in preview_data.columns %}
+              <th class="table-header">{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700/10 font-mono">
+            {% for row in preview_data.rows %}
+            <tr class="hover:bg-gray-700/10 transition-colors">
+              <td class="table-cell text-center text-gray-500">{{ loop.index }}</td>
+              {% for val in row %}
+              <td class="table-cell max-w-xs truncate" title="{{ val }}">{{ val }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if preview_data.raw %}
+      <details class="mt-3">
+        <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-400">Show raw SQL</summary>
+        <pre class="mt-2 p-3 rounded-lg bg-gray-900/80 border border-gray-700/30 text-xs text-gray-400 font-mono max-h-48 overflow-auto whitespace-pre-wrap break-all">{{ preview_data.raw[:10000] }}</pre>
+      </details>
+      {% endif %}
+      {% else %}
+      <p class="text-sm text-gray-400">No data found in this table.</p>
+      {% endif %}
+    {% elif tables %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for t in tables %}
+      <div class="p-3 rounded-xl bg-gray-700/10 border border-gray-700/20 hover:border-cyan-500/30 transition-all duration-200 group">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-7 h-7 rounded-lg bg-cyan-500/10 flex items-center justify-center text-xs font-bold text-cyan-400">T</div>
+          <span class="text-sm font-medium text-gray-200 truncate">{{ t.full_name }}</span>
+        </div>
+        <form method="post" action="/inspect/preview" class="inline">
+          <input type="hidden" name="table_name" value="{{ t.full_name }}">
+          <input type="hidden" name="filepath" value="{{ filepath }}">
+          <input type="hidden" name="is_temp" value="{{ is_temp | lower }}">
+          <button type="submit" class="btn btn-ghost btn-sm w-full text-xs justify-center text-cyan-400 hover:text-cyan-300 group-hover:bg-cyan-500/5">View Data</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-amber-300 bg-amber-500/5 rounded-lg p-3 border border-amber-500/20">No tables found in this backup file. The file may be empty or in an unrecognized format.</p>
+    {% if raw_output %}
+    <details class="mt-3">
+      <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-400">Show raw pg_restore output</summary>
+      <pre class="mt-2 p-3 rounded-lg bg-gray-900/80 border border-gray-700/30 text-xs text-gray-400 font-mono max-h-64 overflow-auto whitespace-pre-wrap break-all">{{ raw_output }}</pre>
+    </details>
+    {% endif %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var currentSource = 'upload';
+function switchSource(source) {
+  currentSource = source;
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    if (btn.getAttribute('data-tab') === source) {
+      btn.className = 'tab-btn flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 bg-indigo-500/20 text-indigo-300';
+    } else {
+      btn.className = 'tab-btn flex-1 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-300';
+    }
+  });
+  document.getElementById('uploadSection').style.display = source === 'upload' ? '' : 'none';
+  document.getElementById('historySection').style.display = source === 'history' ? '' : 'none';
+}
+function validateForm() {
+  if (currentSource === 'upload') {
+    var f = document.getElementById('uploadFileInput');
+    if (!f.files || f.files.length === 0) {
+      alert('Please select a .dump file to upload.');
+      return false;
+    }
+  } else {
+    var s = document.getElementById('backupSelect');
+    if (!s.value) {
+      alert('Please select a backup from the list.');
+      return false;
+    }
+  }
+  return true;
+}
+</script>
+{% endblock %}

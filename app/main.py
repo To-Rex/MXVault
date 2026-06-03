@@ -89,7 +89,7 @@ def health():
     return {"status": "ok", "version": settings.app_version}
 
 
-from app.api import auth, backups, connections, dashboard, restore, schedules, settings as settings_api, storage
+from app.api import auth, backups, connections, dashboard, inspect, restore, schedules, settings as settings_api, storage
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)
@@ -99,6 +99,7 @@ app.include_router(schedules.router)
 app.include_router(settings_api.router)
 app.include_router(storage.router)
 app.include_router(restore.router)
+app.include_router(inspect.router)
 
 
 @app.exception_handler(HTTPException)
