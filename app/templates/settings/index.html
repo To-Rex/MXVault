@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+<div x-data="{ activeTab: 'telegram' }" class="space-y-6">
+
+  <!-- Tab Navigation -->
+  <div class="glass-card p-1 inline-flex gap-1 stagger-1">
+    {% set tabs = [('telegram', 'Telegram'), ('local', 'Local Storage'), ('gdrive', 'Google Drive'), ('yandex', 'Yandex Disk'), ('users', 'Users')] %}
+    {% for key, label in tabs %}
+    <button @click="activeTab = '{{ key }}'" :class="{ 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10': activeTab === '{{ key }}', 'text-gray-500 hover:text-gray-300': activeTab !== '{{ key }}' }" class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200">{{ label }}</button>
+    {% endfor %}
+  </div>
+
+  <!-- Telegram -->
+  <div x-show="activeTab === 'telegram'" class="glass-card p-5 max-w-2xl stagger-2">
+    <div class="flex items-center gap-3 mb-5 pb-3 border-b border-gray-700/20">
+      <div class="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-300">Telegram Notifications</h3>
+        <p class="text-xs text-gray-500">Receive backup notifications via Telegram</p>
+      </div>
+    </div>
+    <form method="post" action="/settings/telegram" class="space-y-4">
+      <div>
+        <label class="label">Bot Token</label>
+        <input type="password" name="bot_token" class="input" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" value="{{ telegram.bot_token or '' }}">
+      </div>
+      <div>
+        <label class="label">Chat ID</label>
+        <input type="text" name="chat_id" class="input" placeholder="-1001234567890" value="{{ telegram.chat_id or '' }}">
+      </div>
+      <label class="flex items-center gap-3 cursor-pointer group">
+        <input type="checkbox" name="enabled" {% if telegram.enabled %}checked{% endif %} value="true" class="checkbox">
+        <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Enable Telegram Notifications</span>
+      </label>
+      <button type="submit" class="btn btn-primary">Save Telegram Settings</button>
+    </form>
+  </div>
+
+  <!-- Local Storage -->
+  <div x-show="activeTab === 'local'" class="glass-card p-5 max-w-2xl stagger-2">
+    <div class="flex items-center gap-3 mb-5 pb-3 border-b border-gray-700/20">
+      <div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-300">Local Storage Settings</h3>
+        <p class="text-xs text-gray-500">Configure local backup storage path and retention</p>
+      </div>
+    </div>
+    <form method="post" action="/settings/local-storage" class="space-y-4">
+      <div>
+        <label class="label">Backup Directory</label>
+        <input type="text" name="backup_dir" class="input" value="{{ local_config.backup_dir }}">
+      </div>
+      <div>
+        <label class="label">Retention (days)</label>
+        <input type="number" name="retention_days" class="input" value="{{ local_config.retention_days or 30 }}" min="1">
+      </div>
+      <button type="submit" class="btn btn-primary">Save Local Storage Settings</button>
+    </form>
+  </div>
+
+  <!-- Google Drive -->
+  <div x-show="activeTab === 'gdrive'" class="glass-card p-5 max-w-2xl stagger-3">
+    <div class="flex items-center gap-3 mb-5 pb-3 border-b border-gray-700/20">
+      <div class="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-300">Google Drive Integration</h3>
+        <p class="text-xs text-gray-500">Store backups in Google Drive</p>
+      </div>
+    </div>
+    <form method="post" action="/settings/google-drive" class="space-y-4">
+      <div>
+        <label class="label">Access Token</label>
+        <input type="password" name="access_token" class="input" value="{{ gdrive_config.get('access_token', '') }}">
+      </div>
+      <div>
+        <label class="label">Refresh Token</label>
+        <input type="password" name="refresh_token" class="input" value="{{ gdrive_config.get('refresh_token', '') }}">
+      </div>
+      <div>
+        <label class="label">Folder ID</label>
+        <input type="text" name="folder_id" class="input" placeholder="root" value="{{ gdrive_config.get('folder_id', 'root') }}">
+      </div>
+      <button type="submit" class="btn btn-primary">Save Google Drive Settings</button>
+    </form>
+  </div>
+
+  <!-- Yandex Disk -->
+  <div x-show="activeTab === 'yandex'" class="glass-card p-5 max-w-2xl stagger-4">
+    <div class="flex items-center gap-3 mb-5 pb-3 border-b border-gray-700/20">
+      <div class="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center">
+        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-300">Yandex Disk Integration</h3>
+        <p class="text-xs text-gray-500">Store backups in Yandex Disk</p>
+      </div>
+    </div>
+    <form method="post" action="/settings/yandex" class="space-y-4">
+      <div>
+        <label class="label">OAuth Token</label>
+        <input type="password" name="access_token" class="input" value="{{ yandex_config.get('access_token', '') }}">
+      </div>
+      <div>
+        <label class="label">Folder Name</label>
+        <input type="text" name="folder" class="input" placeholder="mxvault-backups" value="{{ yandex_config.get('folder', 'mxvault-backups') }}">
+      </div>
+      <button type="submit" class="btn btn-primary">Save Yandex Disk Settings</button>
+    </form>
+  </div>
+
+  <!-- Users (admin only) -->
+  {% if user.is_admin %}
+  <div x-show="activeTab === 'users'" class="glass-card p-5 max-w-2xl stagger-5">
+    <div class="flex items-center gap-3 mb-5 pb-3 border-b border-gray-700/20">
+      <div class="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center">
+        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-300">User Management</h3>
+        <p class="text-xs text-gray-500">Manage system users</p>
+      </div>
+    </div>
+    {% if users %}
+    <div class="space-y-2">
+      {% for u in users %}
+      <div class="flex items-center justify-between p-3 rounded-xl bg-gray-700/20 hover:bg-gray-700/30 transition-all duration-200 stagger-{{ loop.index }}">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center text-xs font-bold text-indigo-400">{{ (u.display_name or u.username)[:2].upper() }}</div>
+          <div>
+            <p class="text-sm font-medium text-gray-200">{{ u.display_name or u.username }}</p>
+            <p class="text-xs text-gray-500">{{ u.email }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          {% if u.is_admin %}<span class="badge badge-info ">Admin</span>{% endif %}
+          <span class="{% if u.is_active %}badge badge-success{% else %}badge badge-danger{% endif %}">{% if u.is_active %}Active{% else %}Inactive{% endif %}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p class="text-gray-500 text-sm">No users found.</p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

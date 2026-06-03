@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}New Schedule{% endblock %}
+{% block page_title %}New Schedule{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto stagger-1">
+  <div class="glass-card p-6">
+    <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-700/20">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-300">New Schedule</h3>
+        <p class="text-xs text-gray-500">Create an automated backup schedule</p>
+      </div>
+    </div>
+    <form method="post" action="/schedules/new" class="space-y-4">
+      <div>
+        <label class="label">Schedule Name</label>
+        <input type="text" name="name" required class="input" placeholder="Nightly Production Backup">
+      </div>
+      <div>
+        <label class="label">Database Connection</label>
+        <select name="connection_id" required class="select">
+          <option value="">Select a connection...</option>
+          {% for c in connections %}
+          <option value="{{ c.id }}">{{ c.name }} ({{ c.host }}/{{ c.database }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="label">Schedule Type</label>
+        <select name="schedule_type" id="schedule_type" class="select" onchange="toggleInterval()">
+          <option value="interval">Every X Minutes</option>
+          <option value="hourly">Hourly</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div id="interval_field">
+        <label class="label">Interval (minutes)</label>
+        <input type="number" name="interval_minutes" class="input" placeholder="60" min="1" value="60">
+      </div>
+      <div>
+        <label class="label">Storage Destination</label>
+        <select name="storage_provider" class="select">
+          <option value="local">Local Storage</option>
+          <option value="google_drive">Google Drive</option>
+          <option value="yandex">Yandex Disk</option>
+        </select>
+      </div>
+      <div>
+        <label class="label">Retention (days)</label>
+        <input type="number" name="retention_days" class="input" value="30" min="1">
+      </div>
+      <div class="flex items-center gap-3 pt-3 border-t border-gray-700/20">
+        <button type="submit" class="btn btn-primary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Create Schedule
+        </button>
+        <a href="/schedules" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function toggleInterval() {
+  const type = document.getElementById('schedule_type').value;
+  document.getElementById('interval_field').style.display = type === 'interval' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

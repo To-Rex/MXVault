@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Backup — {{ backup.database_name }}{% endblock %}
+{% block page_title %}Backup Details{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Info -->
+  <div class="glass-card p-5 stagger-1">
+    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-700/20">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300">Backup Information</h3>
+          <p class="text-xs text-gray-500">{{ backup.database_name }}</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        {% if backup.destination_path %}
+        <a href="/storage/local/download/{{ backup.id }}" class="btn btn-ghost btn-sm">Download</a>
+        {% endif %}
+        <form method="post" action="/backups/{{ backup.id }}/delete" onsubmit="return confirm('Delete this backup?')" class="inline">
+          <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+        </form>
+      </div>
+    </div>
+    <dl class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="p-3 rounded-xl bg-gray-700/10">
+        <dt class="text-xs text-gray-500 uppercase tracking-wider">Status</dt>
+        <dd class="mt-1">
+          {% if backup.status == 'completed' or backup.status == 'uploaded' %}
+          <span class="badge badge-success">{{ backup.status | capitalize }}</span>
+          {% elif backup.status == 'failed' %}
+          <span class="badge badge-danger">Failed</span>
+          {% elif backup.status == 'running' %}
+          <span class="badge badge-warning">Running</span>
+          {% else %}
+          <span class="badge badge-neutral">{{ backup.status }}</span>
+          {% endif %}
+        </dd>
+      </div>
+      <div class="p-3 rounded-xl bg-gray-700/10">
+        <dt class="text-xs text-gray-500 uppercase tracking-wider">Size</dt>
+        <dd class="mt-1 text-sm text-gray-200 font-medium">{% if backup.file_size_bytes %}{{ (backup.file_size_bytes / 1048576)|round(2) }} <span class="font-normal text-gray-500">MB</span>{% else %}<span class="text-gray-600">—</span>{% endif %}</dd>
+      </div>
+      <div class="p-3 rounded-xl bg-gray-700/10">
+        <dt class="text-xs text-gray-500 uppercase tracking-wider">Duration</dt>
+        <dd class="mt-1 text-sm text-gray-200 font-medium">{% if backup.duration_seconds %}{{ backup.duration_seconds }} <span class="font-normal text-gray-500">sec</span>{% else %}<span class="text-gray-600">—</span>{% endif %}</dd>
+      </div>
+      <div class="p-3 rounded-xl bg-gray-700/10">
+        <dt class="text-xs text-gray-500 uppercase tracking-wider">Destination</dt>
+        <dd class="mt-1 text-sm text-gray-200">{{ backup.destination or 'local' }}</dd>
+      </div>
+      <div class="p-3 rounded-xl bg-gray-700/10">
+        <dt class="text-xs text-gray-500 uppercase tracking-wider">Connection</dt>
+        <dd class="mt-1 text-sm text-gray-200">{{ backup.connection_name or '—' }}</dd>
+      </div>
+      <div class="p-3 rounded-xl bg-gray-700/10">
+        <dt class="text-xs text-gray-500 uppercase tracking-wider">Triggered By</dt>
+        <dd class="mt-1 text-sm text-gray-200">{{ backup.triggered_by | capitalize }}</dd>
+      </div>
+      <div class="p-3 rounded-xl bg-gray-700/10">
+        <dt class="text-xs text-gray-500 uppercase tracking-wider">Created</dt>
+        <dd class="mt-1 text-sm text-gray-200">{{ backup.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+      </div>
+      <div class="p-3 rounded-xl bg-gray-700/10">
+        <dt class="text-xs text-gray-500 uppercase tracking-wider">Completed</dt>
+        <dd class="mt-1 text-sm text-gray-200">{% if backup.completed_at %}{{ backup.completed_at.strftime('%Y-%m-%d %H:%M:%S') }}{% else %}<span class="text-gray-600">—</span>{% endif %}</dd>
+      </div>
+    </dl>
+    {% if backup.filename %}
+    <div class="mt-3 pt-3 border-t border-gray-700/20">
+      <span class="text-xs text-gray-500">Filename</span>
+      <p class="text-sm text-gray-300 font-mono mt-0.5">{{ backup.filename }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Log -->
+  {% if backup.log_output %}
+  <div class="glass-card p-5 stagger-2">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-9 h-9 rounded-xl bg-gray-700/30 flex items-center justify-center">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+      </div>
+      <h3 class="text-sm font-semibold text-gray-300">Log Output</h3>
+    </div>
+    <div class="rounded-xl bg-gray-900/50 border border-gray-700/20 p-4 overflow-hidden">
+      <div class="flex items-center gap-1.5 mb-3">
+        <span class="w-2.5 h-2.5 rounded-full bg-red-500/60"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-500/60"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/60"></span>
+        <span class="text-xs text-gray-600 font-mono ml-2">backup.log</span>
+      </div>
+      <pre class="text-xs text-gray-300 font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-96">{{ backup.log_output }}</pre>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Error -->
+  {% if backup.error_message %}
+  <div class="rounded-xl bg-red-500/5 border border-red-500/20 p-4 stagger-3">
+    <div class="flex items-center gap-2 mb-3">
+      <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <h4 class="text-sm font-semibold text-red-400">Error</h4>
+    </div>
+    <pre class="text-xs text-red-300 font-mono whitespace-pre-wrap">{{ backup.error_message }}</pre>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

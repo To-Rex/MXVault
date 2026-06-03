@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Local Storage{% endblock %}
+{% block page_title %}Local Storage{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Config -->
+  <div class="glass-card p-5 stagger-1">
+    <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-700/20">
+      <div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-300">Storage Configuration</h3>
+        <p class="text-xs text-gray-500">Local file storage settings</p>
+      </div>
+    </div>
+    <dl class="space-y-4">
+      <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/10">
+        <dt class="text-xs text-gray-400 uppercase">Backup Directory</dt>
+        <dd class="text-xs text-gray-200 font-mono ml-4 break-all">{{ config.backup_dir }}</dd>
+      </div>
+      <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/10">
+        <dt class="text-xs text-gray-400 uppercase">Retention</dt>
+        <dd class="text-sm text-gray-200 font-medium">{{ config.retention_days }} days</dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- Files -->
+  <div class="lg:col-span-2 glass-card p-5 stagger-2">
+    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-700/20">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-gray-300">Stored Backups</h3>
+      </div>
+    </div>
+    {% if files %}
+    <div class="overflow-x-auto -mx-5">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-gray-700/20">
+            <th class="table-header">Filename</th>
+            <th class="table-header">Size</th>
+            <th class="table-header">Modified</th>
+            <th class="table-header text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-700/10">
+          {% for f in files %}
+          <tr class="hover-scale" style="animation: fadeUp 0.35s ease-out {{ loop.index * 0.05 }}s both;">
+            <td class="table-cell font-mono text-xs text-gray-200"><span class="">{{ f.name }}</span></td>
+            <td class="table-cell text-gray-300 text-sm">{{ (f.size_bytes / 1048576)|round(2) }} <span class="text-gray-500">MB</span></td>
+            <td class="table-cell text-xs text-gray-500">{{ f.modified_at[:19] if f.modified_at else '—' }}</td>
+            <td class="table-cell text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <a href="/storage/local/file/?filepath={{ f.path | urlencode }}" class="btn btn-ghost btn-sm">Download</a>
+                <form method="post" action="/storage/local/file/delete?filepath={{ f.path | urlencode }}" onsubmit="return confirm('Delete this file?')" class="inline">
+                  <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+        </svg>
+      </div>
+      <p class="text-gray-500 text-sm">No backup files found in storage directory.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

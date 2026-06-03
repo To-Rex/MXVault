@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ connection.name }}{% endblock %}
+{% block page_title %}{{ connection.name }}{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Details -->
+  <div class="lg:col-span-2 space-y-6">
+    <div class="glass-card p-5 stagger-1">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+            </svg>
+          </div>
+          <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Connection Details</h3>
+        </div>
+        <div class="flex gap-2">
+          <a href="/connections/{{ connection.id }}/edit" class="btn btn-ghost btn-sm">Edit</a>
+          <form method="post" action="/connections/{{ connection.id }}/delete" onsubmit="return confirm('Delete this connection?')" class="inline">
+            <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+          </form>
+        </div>
+      </div>
+
+      <dl class="grid grid-cols-2 gap-5">
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Host</dt><dd class="text-sm text-gray-200 mt-1 font-mono">{{ connection.host }}:{{ connection.port }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Database</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.database }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Username</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.username }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">SSL Mode</dt><dd class="text-sm text-gray-200 mt-1">{{ connection.ssl_mode | upper }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Status</dt><dd class="mt-1">{% if connection.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Last Tested</dt><dd class="text-sm text-gray-400 mt-1">{% if connection.last_tested_at %}{{ connection.last_tested_at.strftime('%b %d, %Y %H:%M') }}{% else %}<span class="text-gray-600">Never</span>{% endif %}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Last Backup</dt><dd class="text-sm text-gray-400 mt-1">{% if connection.last_backup_at %}{{ connection.last_backup_at.strftime('%b %d, %Y %H:%M') }}{% else %}<span class="text-gray-600">Never</span>{% endif %}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase tracking-wider">Created</dt><dd class="text-sm text-gray-400 mt-1">{{ connection.created_at.strftime('%b %d, %Y') }}</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="space-y-4 stagger-2">
+    <div class="glass-card p-5">
+      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Quick Actions</h3>
+      <div class="space-y-3">
+        <form method="post" action="/backups/run">
+          <input type="hidden" name="connection_id" value="{{ connection.id }}">
+          <input type="hidden" name="storage_provider" value="local">
+          <input type="hidden" name="retention_days" value="30">
+          <button type="submit" class="btn btn-primary w-full justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+            </svg>
+            Run Backup Now
+          </button>
+        </form>
+        <button onclick="testConnection(this, '{{ connection.id }}')" class="btn btn-secondary w-full justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Test Connection
+        </button>
+        <a href="/schedules/new" class="btn btn-secondary w-full justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Create Schedule
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+<!-- Test Result Modal -->
+<div id="testModal" class="fixed inset-0 z-[100] items-center justify-center p-4" style="display:none;animation: fadeIn 0.2s ease-out;">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeTestModal()"></div>
+  <div class="relative glass-card p-6 max-w-sm w-full" style="animation: scaleIn 0.3s ease-out;">
+    <div id="testResult"></div>
+    <button onclick="closeTestModal()" class="btn btn-secondary w-full mt-4 justify-center">Close</button>
+  </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+function testConnection(btn, id) {
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg> Testing...';
+  fetch('/connections/' + id + '/test', { method: 'POST' })
+    .then(r => r.json())
+    .then(function(data) { showTestModal(data); })
+    .catch(function(e) { showTestModal({ success: false, message: e.message }); })
+    .finally(function() {
+      btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Test Connection';
+      btn.disabled = false;
+    });
+}
+function showTestModal(data) {
+  document.getElementById('testResult').innerHTML = data.success ? `
+    <div class="text-center">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/10 flex items-center justify-center shadow-lg shadow-emerald-500/10" style="animation: scaleIn 0.4s ease-out;">
+        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h3 class="text-lg font-semibold text-emerald-400 mb-4">Connection Successful</h3>
+      <div class="space-y-2 text-sm text-left max-w-xs mx-auto">
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-700/20"><span class="text-gray-400">Server</span><span class="text-gray-200 font-medium">${data.server_version || 'N/A'}</span></div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-700/20"><span class="text-gray-400">Latency</span><span class="text-gray-200 font-medium">${(data.latency_ms || 0).toFixed(0)} ms</span></div>
+      </div>
+    </div>` : `
+    <div class="text-center">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center shadow-lg shadow-red-500/10" style="animation: scaleIn 0.4s ease-out;">
+        <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h3 class="text-lg font-semibold text-red-400 mb-4">Connection Failed</h3>
+      <p class="text-sm text-red-300 bg-red-500/5 rounded-lg p-3 border border-red-500/20">${data.message || 'Unknown error'}</p>
+    </div>`;
+  document.getElementById('testModal').style.display = 'flex';
+}
+function closeTestModal() {
+  document.getElementById('testModal').style.display = 'none';
+}
+</script>
+{% endblock %}

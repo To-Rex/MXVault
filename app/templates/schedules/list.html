@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Schedules{% endblock %}
+{% block page_title %}Schedules{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div></div>
+  <a href="/schedules/new" class="btn btn-primary">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    New Schedule
+  </a>
+</div>
+
+{% if schedules %}
+<div class="table-container stagger-1">
+  <table class="w-full">
+    <thead>
+      <tr>
+        <th class="table-header">Name</th>
+        <th class="table-header">Connection</th>
+        <th class="table-header">Type</th>
+        <th class="table-header">Status</th>
+        <th class="table-header">Runs</th>
+        <th class="table-header">Last Run</th>
+        <th class="table-header text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-700/10">
+      {% for s in schedules %}
+      <tr class="stagger-{{ loop.index }}">
+        <td class="table-cell">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <span class="font-medium text-gray-200">{{ s.name }}</span>
+          </div>
+        </td>
+        <td class="table-cell text-gray-400 text-xs">{{ connections.get(s.connection_id, s.connection_id[:12] + '...') }}</td>
+        <td class="table-cell"><span class="badge badge-neutral">{{ s.schedule_type | capitalize }}</span></td>
+        <td class="table-cell">
+          {% if s.is_paused %}
+          <span class="badge badge-warning"><span class="badge-dot warning"></span>Paused</span>
+          {% elif s.is_active %}
+          <span class="badge badge-success"><span class="badge-dot success"></span>Active</span>
+          {% else %}
+          <span class="badge badge-neutral">Inactive</span>
+          {% endif %}
+        </td>
+        <td class="table-cell">
+          <span class="text-sm text-gray-300 font-medium">{{ s.total_runs }}</span>
+          <span class="text-xs text-emerald-400 ml-1">({{ s.successful_runs }})</span>
+          {% if s.failed_runs > 0 %}<span class="text-xs text-red-400">/{{ s.failed_runs }}</span>{% endif %}
+        </td>
+        <td class="table-cell text-gray-500 text-xs">{% if s.last_run_at %}{{ s.last_run_at.strftime('%Y-%m-%d %H:%M') }}{% else %}<span class="text-gray-600">Never</span>{% endif %}</td>
+        <td class="table-cell text-right">
+          <div class="flex items-center justify-end gap-1.5">
+            {% if s.is_paused %}
+            <form method="post" action="/schedules/{{ s.id }}/resume" class="inline">
+              <button type="submit" class="btn btn-ghost btn-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10">Resume</button>
+            </form>
+            {% else %}
+            <form method="post" action="/schedules/{{ s.id }}/pause" class="inline">
+              <button type="submit" class="btn btn-ghost btn-sm">Pause</button>
+            </form>
+            {% endif %}
+            <form method="post" action="/schedules/{{ s.id }}/delete" onsubmit="return confirm('Delete this schedule?')" class="inline">
+              <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state stagger-1">
+  <div class="empty-state-icon">
+    <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+  </div>
+  <h3 class="text-lg font-medium text-gray-300 mb-2">No schedules yet</h3>
+  <p class="text-gray-500 text-sm mb-6">Automate your backups with scheduled tasks</p>
+  <a href="/schedules/new" class="btn btn-primary">Create Schedule</a>
+</div>
+{% endif %}
+{% endblock %}

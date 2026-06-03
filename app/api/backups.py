@@ -1,0 +1,102 @@
+import json
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.dependencies import get_current_user
+from app.models.backup import BackupLog
+from app.models.connection import PGConnection
+from app.models.user import User
+from app.services.audit import log_audit
+from app.services.backup import get_backup_logs, run_backup
+from app.templates import templates
+
+router = APIRouter(prefix="/backups", tags=["backups"])
+
+
+@router.get("")
+def list_backups(
+    request: Request,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    connection_id: str = Query(None),
+    status: str = Query(None),
+    search: str = Query(None),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    offset = (page - 1) * per_page
+    items, total = get_backup_logs(db, connection_id=connection_id, status=status, search=search, limit=per_page, offset=offset)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    connections = db.query(PGConnection).order_by(PGConnection.name).all()
+
+    return templates.TemplateResponse(request, "backups/list.html", {
+        "request": request,
+        "user": user,
+        "backups": items,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": total_pages,
+        "connections": connections,
+        "filter_connection_id": connection_id,
+        "filter_status": status,
+        "filter_search": search,
+    })
+
+
+@router.get("/{backup_id}")
+def view_backup(backup_id: str, request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    backup = db.query(BackupLog).filter(BackupLog.id == backup_id).first()
+    if not backup:
+        raise HTTPException(status_code=404, detail="Backup not found")
+    return templates.TemplateResponse(request, "backups/view.html", {"request": request, "user": user, "backup": backup})
+
+
+@router.post("/{backup_id}/delete")
+def delete_backup(backup_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    backup = db.query(BackupLog).filter(BackupLog.id == backup_id).first()
+    if not backup:
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    import os
+    if backup.destination_path and os.path.exists(backup.destination_path):
+        try:
+            os.remove(backup.destination_path)
+        except OSError:
+            pass
+
+    db.delete(backup)
+    db.commit()
+    log_audit(db, action="backup_deleted", user_id=user.id, username=user.username,
+              resource_type="backup", resource_id=backup_id)
+    return RedirectResponse(url="/backups", status_code=302)
+
+
+@router.post("/run")
+def run_backup_route(
+    request: Request,
+    connection_id: str = Form(...),
+    storage_provider: str = Form("local"),
+    retention_days: int = Form(30),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    connection = db.query(PGConnection).filter(PGConnection.id == connection_id).first()
+    if not connection:
+        raise HTTPException(status_code=404, detail="Connection not found")
+
+    from app.services.notification import notify_backup_started
+
+    backup = run_backup(db, connection, storage_provider, retention_days)
+
+    if backup.status == "running" or backup.status == "completed":
+        notify_backup_started(db, backup)
+
+    log_audit(db, action="backup_run", user_id=user.id, username=user.username,
+              resource_type="backup", resource_id=backup.id,
+              details=f"Backup of '{connection.name}' - status: {backup.status}")
+
+    return RedirectResponse(url=f"/backups/{backup.id}", status_code=302)

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block page_title %}Profile{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto stagger-1">
+  <div class="glass-card p-6">
+    <!-- Avatar & Info -->
+    <div class="flex items-center gap-5 mb-6 pb-5 border-b border-gray-700/20">
+      <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-600/30 flex items-center justify-center text-xl font-bold text-indigo-400 shadow-lg shadow-indigo-500/10" style="animation: float 6s ease-in-out infinite;">
+        {{ (user.display_name or user.username)[:2].upper() }}
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold text-white">{{ user.display_name or user.username }}</h3>
+        <p class="text-sm text-gray-400">{{ user.email }}</p>
+        <p class="text-xs text-gray-500 mt-1">Member since {{ user.created_at.strftime('%B %Y') }}</p>
+      </div>
+    </div>
+
+    <form method="post" action="/auth/profile" class="space-y-4">
+      <div>
+        <label class="label">Display Name</label>
+        <input type="text" name="display_name" class="input" value="{{ user.display_name or '' }}" placeholder="Your display name">
+      </div>
+      <div>
+        <label class="label">Email</label>
+        <input type="email" name="email" class="input" value="{{ user.email }}" placeholder="your@email.com">
+      </div>
+
+      <div class="pt-2">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+          <h4 class="text-sm font-semibold text-gray-300">Change Password</h4>
+        </div>
+        <div class="space-y-4 pl-11">
+          <div>
+            <label class="label">Current Password</label>
+            <input type="password" name="current_password" class="input" placeholder="Enter current password to change">
+          </div>
+          <div>
+            <label class="label">New Password</label>
+            <input type="password" name="new_password" class="input" placeholder="Enter new password (min 8 chars)">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-3 border-t border-gray-700/20">
+        <button type="submit" class="btn btn-primary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Update Profile
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

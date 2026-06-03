@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" x-data="{ theme: localStorage.getItem('theme') || 'dark', sidebarOpen: true, mobileSidebar: false, scrolled: false }" :class="theme">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MXVault{% endblock %} — MXVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .sidebar-scroll::-webkit-scrollbar { width: 3px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 99px; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-900 text-gray-100 antialiased"
+      @scroll.window="scrolled = window.scrollY > 20">
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Mobile Backdrop -->
+    <div x-cloak x-show="mobileSidebar" @click="mobileSidebar = false"
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden animate-fade-in"></div>
+
+    <!-- Sidebar -->
+    <aside :class="mobileSidebar ? 'translate-x-0' : '-translate-x-full'"
+           class="fixed lg:static inset-y-0 left-0 z-50 w-64
+                  bg-gray-800/80 backdrop-blur-xl border-r border-gray-700/30
+                  transform transition-all duration-300 ease-out
+                  lg:translate-x-0 overflow-y-auto sidebar-scroll">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-3 px-5 h-16 border-b border-gray-700/20">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600
+                    flex items-center justify-center text-white font-bold text-sm
+                    shadow-lg shadow-indigo-500/20 animate-float">
+          M
+        </div>
+        <span class="text-lg font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">MXVault</span>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="p-3 space-y-0.5 mt-2">
+        {% set nav_items = [
+          ('/dashboard', 'Dashboard', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'),
+          ('/connections', 'Connections', 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4'),
+          ('/backups', 'Backups', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'),
+          ('/schedules', 'Schedules', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
+          ('/storage/local', 'Storage', 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'),
+          ('/restore', 'Restore', 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'),
+          ('/settings', 'Settings', 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z'),
+        ] %}
+        {% for href, label, icon_path in nav_items %}
+        <a href="{{ href }}"
+           class="sidebar-link group"
+           :class="{ 'active': window.location.pathname.startsWith('{{ href.split('?')[0] }}') || (window.location.pathname === '/' && '{{ href }}' === '/dashboard') }">
+          <svg class="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ icon_path }}"/>
+          </svg>
+          <span>{{ label }}</span>
+        </a>
+        {% endfor %}
+      </nav>
+
+      <!-- User Footer -->
+      <div class="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-700/20 bg-gray-800/60 backdrop-blur-xl">
+        <a href="/auth/profile" class="sidebar-link group">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20
+                      flex items-center justify-center text-xs font-bold text-indigo-400
+                      transition-transform duration-200 group-hover:scale-110">
+            {{ user.username[:2].upper() }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-200 truncate">{{ user.display_name or user.username }}</p>
+            <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+          </div>
+        </a>
+        <form method="post" action="/auth/logout" class="mt-1">
+          <button type="submit" class="sidebar-link w-full text-gray-500 hover:text-red-400 group">
+            <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- Header -->
+      <header :class="scrolled ? 'bg-gray-900/80 backdrop-blur-xl border-b border-gray-700/20 shadow-lg shadow-black/5' : 'bg-transparent'"
+              class="sticky top-0 z-30 px-4 lg:px-6 h-16 flex items-center justify-between transition-all duration-300">
+
+        <div class="flex items-center gap-3">
+          <button @click="mobileSidebar = !mobileSidebar"
+                  class="lg:hidden p-2 rounded-xl hover:bg-gray-700/50 transition-all duration-200 text-gray-400 hover:text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <h1 class="page-title text-lg">{% block page_title %}{% endblock %}</h1>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Theme Toggle -->
+          <button @click="theme = theme === 'dark' ? 'light' : 'dark';
+                          localStorage.setItem('theme', theme);
+                          document.documentElement.className = theme"
+                  class="btn btn-icon btn-ghost rounded-xl relative"
+                  x-data="{ sun: false }">
+            <svg x-show="theme === 'dark'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <svg x-show="theme === 'light'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+        {% if error %}
+        <div class="animate-fade-down rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 flex items-center gap-3">
+          <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm text-red-300">{{ error }}</p>
+        </div>
+        {% endif %}
+        {% if success %}
+        <div class="animate-fade-down rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 flex items-center gap-3">
+          <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm text-emerald-300">{{ success }}</p>
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Ripple Effect Script -->
+  <script>
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.btn');
+      if (btn && !btn.closest('a')) {
+        const rect = btn.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+        btn.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      }
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

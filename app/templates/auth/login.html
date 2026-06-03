@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — MXVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+    @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+    .animate-gradient { background-size: 400% 400%; animation: gradientShift 15s ease infinite; }
+    .animate-fade-in { animation: fadeIn 0.6s ease-out; }
+    .animate-fade-up { animation: fadeUp 0.6s ease-out; }
+    .animate-scale-in { animation: scaleIn 0.5s ease-out; }
+    .animate-float { animation: float 4s ease-in-out infinite; }
+    .animate-pulse { animation: pulse 3s ease-in-out infinite; }
+    .auth-bg {
+      background: linear-gradient(135deg, #0f0c29, #1a0a3e, #0f172a, #1a0a3e, #0f0c29);
+      background-size: 400% 400%;
+      animation: gradientShift 12s ease infinite;
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 50%, rgba(99,102,241,0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 20%, rgba(139,92,246,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(99,102,241,0.05) 0%, transparent 50%);
+    }
+    .auth-card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    }
+    .auth-input {
+      display: block;
+      width: 100%;
+      border-radius: 0.875rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      padding: 0.75rem 1rem;
+      font-size: 0.9375rem;
+      color: #f3f4f6;
+      transition: all 0.25s ease;
+      outline: none;
+    }
+    .auth-input::placeholder { color: rgba(156,163,175,0.3); }
+    .auth-input:focus {
+      border-color: rgba(99,102,241,0.4);
+      background: rgba(255,255,255,0.05);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+    }
+    .auth-input:hover { border-color: rgba(255,255,255,0.12); }
+    .auth-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.875rem;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-btn:hover {
+      box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+      transform: translateY(-1px);
+    }
+    .auth-btn:active { transform: scale(0.98); }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="auth-bg min-h-screen flex items-center justify-center p-4">
+
+  <!-- Ambient Orbs -->
+  <div class="glow-orb w-96 h-96 bg-indigo-500/10 top-[-5%] left-[-5%] animate-float"></div>
+  <div class="glow-orb w-80 h-80 bg-purple-500/8 bottom-[-5%] right-[-5%] animate-float" style="animation-delay: -2s;"></div>
+  <div class="glow-orb w-64 h-64 bg-indigo-500/6 bottom-[20%] left-[60%] animate-pulse"></div>
+
+  <div class="w-full max-w-md relative z-10 animate-fade-up">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl
+                  bg-gradient-to-br from-indigo-500 to-purple-600 mb-4
+                  shadow-xl shadow-indigo-500/20 animate-float">
+        <span class="text-2xl font-bold text-white">M</span>
+      </div>
+      <h1 class="text-3xl font-bold text-white tracking-tight">MXVault</h1>
+      <p class="text-gray-400 mt-1.5 text-sm font-light">PostgreSQL Backup Management Platform</p>
+    </div>
+
+    <!-- Card -->
+    <div class="auth-card">
+      <h2 class="text-xl font-semibold text-white mb-1">Welcome back</h2>
+      <p class="text-sm text-gray-400 mb-6 font-light">Sign in to manage your backups</p>
+
+      {% if error %}
+      <div class="animate-fade-in mb-5 rounded-xl bg-red-500/10 border border-red-500/15 px-4 py-3 flex items-center gap-3">
+        <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-sm text-red-300">{{ error }}</p>
+      </div>
+      {% endif %}
+
+      <form method="post" action="/auth/login" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Username</label>
+          <input type="text" name="username" required
+                 class="auth-input" placeholder="Enter your username"
+                 autocomplete="username" autofocus>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
+          <input type="password" name="password" required
+                 class="auth-input" placeholder="Enter your password"
+                 autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="auth-btn mt-2 group">
+          <span>Sign In</span>
+          <svg class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-gray-600 text-xs mt-8 font-light">
+      MXVault v1.0.0 — Open Source PostgreSQL Backup Management
+    </p>
+  </div>
+</body>
+</html>

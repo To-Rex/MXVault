@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Backups{% endblock %}
+{% block page_title %}Backups{% endblock %}
+{% block content %}
+<!-- Filters -->
+<div class="glass-card p-4 mb-6 stagger-1">
+  <form class="flex flex-wrap items-center gap-3" method="get" action="/backups">
+    <div class="relative flex-1 min-w-[200px] max-w-[300px]">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input type="text" name="search" placeholder="Search backups..." value="{{ filter_search or '' }}" class="input pl-10">
+    </div>
+    <select name="connection_id" class="select">
+      <option value="">All Connections</option>
+      {% for c in connections %}
+      <option value="{{ c.id }}" {% if filter_connection_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="select">
+      <option value="">All Status</option>
+      <option value="completed" {% if filter_status == 'completed' %}selected{% endif %}>Completed</option>
+      <option value="uploaded" {% if filter_status == 'uploaded' %}selected{% endif %}>Uploaded</option>
+      <option value="failed" {% if filter_status == 'failed' %}selected{% endif %}>Failed</option>
+      <option value="running" {% if filter_status == 'running' %}selected{% endif %}>Running</option>
+    </select>
+    <button type="submit" class="btn btn-ghost btn-sm">Filter</button>
+    <a href="/backups" class="btn btn-ghost btn-sm">Clear</a>
+  </form>
+</div>
+
+{% if backups %}
+<div class="table-container stagger-2">
+  <table class="w-full">
+    <thead>
+      <tr>
+        <th class="table-header">Database</th>
+        <th class="table-header">Connection</th>
+        <th class="table-header">Status</th>
+        <th class="table-header">Size</th>
+        <th class="table-header">Duration</th>
+        <th class="table-header">Destination</th>
+        <th class="table-header">Date</th>
+        <th class="table-header text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-700/10">
+      {% for b in backups %}
+      <tr class="stagger-{{ loop.index }}">
+        <td class="table-cell">
+          <a href="/backups/{{ b.id }}" class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-2 transition-colors">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center text-xs font-bold text-indigo-400">{{ b.database_name[:2].upper() }}</div>
+            {{ b.database_name }}
+          </a>
+        </td>
+        <td class="table-cell text-gray-500 text-xs">{{ b.connection_name or '—' }}</td>
+        <td class="table-cell">
+          {% if b.status == 'completed' or b.status == 'uploaded' %}
+          <span class="badge badge-success"><span class="badge-dot success"></span>{{ b.status | capitalize }}</span>
+          {% elif b.status == 'failed' %}
+          <span class="badge badge-danger"><span class="badge-dot danger"></span>Failed</span>
+          {% elif b.status == 'running' %}
+          <span class="badge badge-warning"><span class="animate-pulse" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#fbbf24;margin-right:4px;box-shadow:0 0 6px rgba(251,191,36,0.5);"></span>Running</span>
+          {% else %}
+          <span class="badge badge-neutral">{{ b.status | capitalize }}</span>
+          {% endif %}
+        </td>
+        <td class="table-cell text-sm text-gray-300 font-medium">
+          {% if b.file_size_bytes %}{{ (b.file_size_bytes / 1048576)|round(2) }} <span class="font-normal text-gray-500">MB</span>{% else %}<span class="text-gray-600">—</span>{% endif %}
+        </td>
+        <td class="table-cell text-gray-500 text-xs">{% if b.duration_seconds %}{{ b.duration_seconds }}s{% else %}—{% endif %}</td>
+        <td class="table-cell text-gray-500 text-xs">{{ b.destination or 'local' }}</td>
+        <td class="table-cell text-gray-500 text-xs">{{ b.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="table-cell text-right">
+          <div class="flex items-center justify-end gap-1.5">
+            <a href="/backups/{{ b.id }}" class="btn btn-ghost btn-sm">View</a>
+            {% if b.destination_path %}
+            <a href="/storage/local/download/{{ b.id }}" class="btn btn-ghost btn-sm">Download</a>
+            {% endif %}
+            <form method="post" action="/backups/{{ b.id }}/delete" onsubmit="return confirm('Delete this backup?')" class="inline">
+              <button type="submit" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if total_pages > 1 %}
+<div class="flex items-center justify-between pt-4 stagger-3">
+  <p class="text-sm text-gray-500">{{ total }} backup{{ 's' if total != 1 else '' }} total</p>
+  <div class="flex gap-2">
+    {% if page > 1 %}
+    <a href="/backups?page={{ page - 1 }}&per_page={{ per_page }}{% if filter_connection_id %}&connection_id={{ filter_connection_id }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="btn btn-ghost btn-sm">← Previous</a>
+    {% endif %}
+    {% if page < total_pages %}
+    <a href="/backups?page={{ page + 1 }}&per_page={{ per_page }}{% if filter_connection_id %}&connection_id={{ filter_connection_id }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="btn btn-ghost btn-sm">Next →</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state stagger-2">
+  <div class="empty-state-icon">
+    <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+    </svg>
+  </div>
+  <h3 class="text-lg font-medium text-gray-300 mb-2">No backups found</h3>
+  <p class="text-gray-500 text-sm mb-6">Backups will appear here after they run</p>
+  <a href="/connections" class="btn btn-primary">View Connections</a>
+</div>
+{% endif %}
+{% endblock %}

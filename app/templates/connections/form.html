@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{% if connection %}Edit{% else %}New{% endif %} Connection{% endblock %}
+{% block page_title %}{% if connection %}Edit Connection{% else %}New Connection{% endif %}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto stagger-1">
+  <div class="glass-card p-6">
+    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-700/20">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-semibold text-white">{% if connection %}Edit Connection{% else %}New Connection{% endif %}</h3>
+        <p class="text-xs text-gray-500">PostgreSQL database connection details</p>
+      </div>
+    </div>
+
+    <form method="post" action="{% if connection %}/connections/{{ connection.id }}/edit{% else %}/connections/new{% endif %}" class="space-y-4">
+      <div>
+        <label class="label">Connection Name</label>
+        <input type="text" name="name" required class="input" placeholder="e.g. Production Database" value="{{ connection.name if connection else '' }}">
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="col-span-2">
+          <label class="label">Host</label>
+          <input type="text" name="host" required class="input" placeholder="localhost or IP" value="{{ connection.host if connection else '' }}">
+        </div>
+        <div>
+          <label class="label">Port</label>
+          <input type="number" name="port" required class="input" value="{{ connection.port if connection else '5432' }}">
+        </div>
+      </div>
+      <div>
+        <label class="label">Database</label>
+        <input type="text" name="database" required class="input" placeholder="my_database" value="{{ connection.database if connection else '' }}">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="label">Username</label>
+          <input type="text" name="username" required class="input" placeholder="postgres" value="{{ connection.username if connection else '' }}">
+        </div>
+        <div>
+          <label class="label">Password</label>
+          <input type="password" name="password" class="input" placeholder="{% if connection %}Leave empty to keep current{% else %}Enter password{% endif %}">
+        </div>
+      </div>
+      <div>
+        <label class="label">SSL Mode</label>
+        <select name="ssl_mode" class="select">
+          <option value="prefer" {% if connection and connection.ssl_mode == 'prefer' %}selected{% endif %}>Prefer</option>
+          <option value="require" {% if connection and connection.ssl_mode == 'require' %}selected{% endif %}>Require</option>
+          <option value="disable" {% if connection and connection.ssl_mode == 'disable' %}selected{% endif %}>Disable</option>
+          <option value="allow" {% if connection and connection.ssl_mode == 'allow' %}selected{% endif %}>Allow</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-3 pt-4 border-t border-gray-700/20">
+        <button type="submit" class="btn btn-primary">
+          {% if connection %}Update{% else %}Create{% endif %} Connection
+        </button>
+        <a href="/connections" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
