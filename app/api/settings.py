@@ -72,10 +72,11 @@ def update_telegram(
     bot_token: str = Form(""),
     chat_id: str = Form(""),
     enabled: bool = Form(False),
+    send_file: bool = Form(False),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    save_telegram_config(db, bot_token, chat_id, enabled)
+    save_telegram_config(db, bot_token, chat_id, enabled, send_file)
     log_audit(db, action="settings_telegram_updated", user_id=user.id, username=user.username)
     return RedirectResponse(url="/settings", status_code=302)
 
@@ -91,10 +92,11 @@ def add_email_account(
     to_addresses: str = Form(""),
     enabled: bool = Form(False),
     use_tls: bool = Form(True),
+    send_file: bool = Form(False),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    save_email_account(db, None, name, smtp_host, smtp_port, smtp_user, smtp_pass, from_addr, to_addresses, enabled, use_tls)
+    save_email_account(db, None, name, smtp_host, smtp_port, smtp_user, smtp_pass, from_addr, to_addresses, enabled, use_tls, send_file)
     log_audit(db, action="settings_email_added", user_id=user.id, username=user.username)
     return RedirectResponse(url="/settings", status_code=302)
 
@@ -111,10 +113,11 @@ def update_email_account(
     to_addresses: str = Form(""),
     enabled: bool = Form(False),
     use_tls: bool = Form(True),
+    send_file: bool = Form(False),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    save_email_account(db, account_id, name, smtp_host, smtp_port, smtp_user, smtp_pass, from_addr, to_addresses, enabled, use_tls)
+    save_email_account(db, account_id, name, smtp_host, smtp_port, smtp_user, smtp_pass, from_addr, to_addresses, enabled, use_tls, send_file)
     log_audit(db, action="settings_email_updated", user_id=user.id, username=user.username)
     return RedirectResponse(url="/settings", status_code=302)
 

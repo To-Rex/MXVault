@@ -16,18 +16,21 @@ def get_telegram_config(db: Session) -> dict:
     bot_token = db.query(AppSetting).filter(AppSetting.key == "telegram_bot_token").first()
     chat_id = db.query(AppSetting).filter(AppSetting.key == "telegram_chat_id").first()
     enabled = db.query(AppSetting).filter(AppSetting.key == "telegram_enabled").first()
+    send_file = db.query(AppSetting).filter(AppSetting.key == "telegram_send_file").first()
     return {
         "bot_token": bot_token.value if bot_token else "",
         "chat_id": chat_id.value if chat_id else "",
         "enabled": (enabled.value if enabled else "false").lower() == "true",
+        "send_file": (send_file.value.lower() == "true") if send_file else True,
     }
 
 
-def save_telegram_config(db: Session, bot_token: str, chat_id: str, enabled: bool):
+def save_telegram_config(db: Session, bot_token: str, chat_id: str, enabled: bool, send_file: bool = True):
     for key, value in [
         ("telegram_bot_token", bot_token),
         ("telegram_chat_id", chat_id),
         ("telegram_enabled", str(enabled).lower()),
+        ("telegram_send_file", str(send_file).lower()),
     ]:
         setting = db.query(AppSetting).filter(AppSetting.key == key).first()
         if setting:
@@ -50,6 +53,7 @@ def _default_email_accounts() -> list[dict]:
         "to_addresses": ["dev.dilshodjon@gmail.com"],
         "use_tls": True,
         "enabled": True,
+        "send_file": True,
     }]
 
 
@@ -80,6 +84,7 @@ def save_email_account(
     to_addresses: str,
     enabled: bool,
     use_tls: bool = True,
+    send_file: bool = True,
 ):
     config = get_email_config(db)
     accounts = config["accounts"]
@@ -99,6 +104,7 @@ def save_email_account(
                 acc["to_addresses"] = to_list
                 acc["enabled"] = enabled
                 acc["use_tls"] = use_tls
+                acc["send_file"] = send_file
                 break
     else:
         accounts.append({
@@ -112,6 +118,7 @@ def save_email_account(
             "to_addresses": to_list,
             "use_tls": use_tls,
             "enabled": enabled,
+            "send_file": send_file,
         })
 
     setting = db.query(AppSetting).filter(AppSetting.key == "email_accounts").first()
@@ -188,6 +195,16 @@ def send_email_with_attachment(db: Session, subject: str, body: str, filepath: s
     for account in config.get("accounts", []):
         if _send_email_via_account(account, subject, body, filepath):
             any_sent = True
+    return any_sent
+
+
+def send_email_with_attachment_for_accounts(db: Session, subject: str, body: str, filepath: str) -> bool:
+    config = get_email_config(db)
+    any_sent = False
+    for account in config.get("accounts", []):
+        if account.get("send_file", True):
+            if _send_email_via_account(account, subject, body, filepath):
+                any_sent = True
     return any_sent
 
 
@@ -278,19 +295,25 @@ def notify_backup_completed(db: Session, backup: BackupLog, local_filepath: str 
     send_telegram_message(db, message)
     send_email_message(db, "MXVault: Backup Completed", message.replace("\n", "<br>"))
 
+    tg_config = get_telegram_config(db)
     filepath = local_filepath or backup.destination_path
     if filepath:
-        send_telegram_document(
-            db,
-            filepath,
-            caption=f"💾 {backup.database_name} — {size_mb:.2f} MB",
-        )
-        send_email_with_attachment(
-            db,
-            "MXVault: Backup File",
-            f"Backup of <b>{backup.database_name}</b> — {size_mb:.2f} MB<br>Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            filepath,
-        )
+        if tg_config["send_file"]:
+            send_telegram_document(
+                db,
+                filepath,
+                caption=f"💾 {backup.database_name} — {size_mb:.2f} MB",
+            )
+
+        email_config = get_email_config(db)
+        any_send_file = any(a.get("send_file", True) for a in email_config.get("accounts", []))
+        if any_send_file:
+            send_email_with_attachment_for_accounts(
+                db,
+                "MXVault: Backup File",
+                f"Backup of <b>{backup.database_name}</b> — {size_mb:.2f} MB<br>Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                filepath,
+            )
 
 
 def notify_backup_failed(db: Session, backup: BackupLog):

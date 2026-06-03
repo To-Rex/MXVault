@@ -13,10 +13,15 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.get("/login")
-def login_page(request: Request):
+def login_page(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("session_token")
     if token:
-        return RedirectResponse(url="/dashboard", status_code=302)
+        user = get_session_user(token, db)
+        if user:
+            return RedirectResponse(url="/dashboard", status_code=302)
+        response = templates.TemplateResponse(request, "auth/login.html", {"request": request})
+        response.delete_cookie("session_token")
+        return response
     return templates.TemplateResponse(request, "auth/login.html", {"request": request})
 
 
