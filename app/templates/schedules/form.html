@@ -31,7 +31,7 @@
       </div>
       <div>
         <label class="label" data-i18n="sched_type">Schedule Type</label>
-        <select name="schedule_type" id="schedule_type" class="select" onchange="toggleInterval()">
+        <select name="schedule_type" id="schedule_type" class="select" onchange="toggleFields()">
           <option value="interval" {% if schedule and schedule.schedule_type == 'interval' %}selected{% endif %} data-i18n="sched_types_interval">Every X Minutes</option>
           <option value="hourly" {% if schedule and schedule.schedule_type == 'hourly' %}selected{% endif %} data-i18n="sched_types_hourly">Hourly</option>
           <option value="daily" {% if schedule and schedule.schedule_type == 'daily' %}selected{% endif %} data-i18n="sched_types_daily">Daily</option>
@@ -42,6 +42,22 @@
       <div id="interval_field">
         <label class="label" data-i18n="sched_interval">Interval (minutes)</label>
         <input type="number" name="interval_minutes" class="input" placeholder="60" min="1" value="{{ schedule.interval_minutes if schedule else 60 }}">
+      </div>
+      <div id="time_field" style="display:none">
+        <label class="label" data-i18n="sched_time">Time</label>
+        <div class="flex items-center gap-2">
+          <select name="schedule_hour" class="select" style="max-width:80px">
+            {% for h in range(24) %}
+            <option value="{{ h }}" {% if schedule_hour is defined and schedule_hour == h %}selected{% endif %}>{{ '%02d' % h }}</option>
+            {% endfor %}
+          </select>
+          <span class="text-gray-400 text-sm font-medium">:</span>
+          <select name="schedule_minute" class="select" style="max-width:80px">
+            {% for m in range(0, 60, 5) %}
+            <option value="{{ m }}" {% if schedule_minute is defined and schedule_minute == m %}selected{% endif %}>{{ '%02d' % m }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
       <div>
         <label class="label" data-i18n="sched_storage">Storage Destination</label>
@@ -81,12 +97,14 @@
   </div>
 </div>
 <script>
-function toggleInterval() {
+function toggleFields() {
   var type = document.getElementById('schedule_type').value;
   document.getElementById('interval_field').style.display = type === 'interval' ? 'block' : 'none';
+  var showTime = type === 'daily' || type === 'weekly' || type === 'monthly';
+  document.getElementById('time_field').style.display = showTime ? 'block' : 'none';
 }
-{% if schedule and schedule.schedule_type != 'interval' %}
-document.addEventListener('DOMContentLoaded', function() { toggleInterval(); });
+{% if schedule %}
+document.addEventListener('DOMContentLoaded', function() { toggleFields(); });
 {% endif %}
 </script>
 {% endblock %}

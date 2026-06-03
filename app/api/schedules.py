@@ -60,6 +60,8 @@ def create_schedule(
     connection_id: str = Form(...),
     schedule_type: str = Form(...),
     interval_minutes: int = Form(None),
+    schedule_hour: int = Form(None),
+    schedule_minute: int = Form(None),
     cron_expression: str = Form(None),
     retention_days: int = Form(30),
     storage_local: str = Form("local"),
@@ -86,7 +88,17 @@ def create_schedule(
     }
 
     if schedule_type != "interval" and not cron_expression:
-        cron_expression = cron_map.get(schedule_type)
+        if schedule_type in ("daily", "weekly", "monthly") and schedule_hour is not None and schedule_minute is not None:
+            h = int(schedule_hour)
+            m = int(schedule_minute)
+            if schedule_type == "daily":
+                cron_expression = f"{m} {h} * * *"
+            elif schedule_type == "weekly":
+                cron_expression = f"{m} {h} * * 0"
+            elif schedule_type == "monthly":
+                cron_expression = f"{m} {h} 1 * *"
+        else:
+            cron_expression = cron_map.get(schedule_type)
 
     providers = []
     if storage_local: providers.append("local")
@@ -122,11 +134,25 @@ def edit_schedule(schedule_id: str, request: Request, db: Session = Depends(get_
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
     connections = db.query(PGConnection).filter(PGConnection.is_active == True).all()
+
+    schedule_hour = 0
+    schedule_minute = 0
+    if schedule.cron_expression:
+        parts = schedule.cron_expression.split()
+        if len(parts) >= 2:
+            try:
+                schedule_minute = int(parts[0])
+                schedule_hour = int(parts[1])
+            except ValueError:
+                pass
+
     return templates.TemplateResponse(request, "schedules/form.html", {
         "request": request,
         "user": user,
         "schedule": schedule,
         "connections": connections,
+        "schedule_hour": schedule_hour,
+        "schedule_minute": schedule_minute,
     })
 
 
@@ -138,6 +164,8 @@ def update_schedule(
     connection_id: str = Form(...),
     schedule_type: str = Form(...),
     interval_minutes: int = Form(None),
+    schedule_hour: int = Form(None),
+    schedule_minute: int = Form(None),
     cron_expression: str = Form(None),
     retention_days: int = Form(30),
     storage_local: str = Form("local"),
@@ -165,7 +193,17 @@ def update_schedule(
     }
 
     if schedule_type != "interval" and not cron_expression:
-        cron_expression = cron_map.get(schedule_type)
+        if schedule_type in ("daily", "weekly", "monthly") and schedule_hour is not None and schedule_minute is not None:
+            h = int(schedule_hour)
+            m = int(schedule_minute)
+            if schedule_type == "daily":
+                cron_expression = f"{m} {h} * * *"
+            elif schedule_type == "weekly":
+                cron_expression = f"{m} {h} * * 0"
+            elif schedule_type == "monthly":
+                cron_expression = f"{m} {h} 1 * *"
+        else:
+            cron_expression = cron_map.get(schedule_type)
 
     providers = []
     if storage_local: providers.append("local")
