@@ -44,7 +44,7 @@
         <td class="table-cell"><span class="badge badge-neutral">{{ s.schedule_type | capitalize }}</span></td>
         <td class="table-cell">
           {% if s.next_run_at and s.is_active and not s.is_paused %}
-          <span class="countdown text-sm font-medium text-indigo-300" data-next-run="{{ s.next_run_at.strftime('%Y-%m-%dT%H:%M:%S') }}"></span>
+          <span class="countdown text-sm font-medium text-indigo-300" data-next-run-ts="{{ (s.next_run_at.timestamp() * 1000) | int }}"></span>
           <div class="text-xs text-gray-500">{{ s.next_run_at.strftime('%Y-%m-%d %H:%M') }}</div>
           {% elif s.is_paused %}
           <span class="text-sm text-gray-500" data-i18n="status_paused">Paused</span>
@@ -108,11 +108,11 @@
 {% block extra_scripts %}
 <script>
 function updateCountdowns() {
-  var now = new Date().getTime();
+  var now = Date.now();
   var elements = document.querySelectorAll('.countdown');
 
   elements.forEach(function(el) {
-    var nextRun = new Date(el.getAttribute('data-next-run')).getTime();
+    var nextRun = parseInt(el.getAttribute('data-next-run-ts'), 10);
     var diff = nextRun - now;
 
     if (diff <= 0) {
