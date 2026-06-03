@@ -36,3 +36,5 @@ data/backups/
 
 # Project specific
 instance/
+data/*.db
+data/*.sqlite
