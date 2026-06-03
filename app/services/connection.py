@@ -1,3 +1,4 @@
+import re
 import subprocess
 import time
 from uuid import uuid4
@@ -6,6 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.models.connection import PGConnection
 from app.utils.crypto import decrypt_password, encrypt_password
+
+
+def _clean_host(host: str) -> str:
+    return re.sub(r'^https?://', '', host).rstrip('/')
 
 
 def create_connection(
@@ -21,7 +26,7 @@ def create_connection(
     conn = PGConnection(
         id=str(uuid4()),
         name=name,
-        host=host,
+        host=_clean_host(host),
         port=port,
         database=database,
         username=username,
@@ -40,6 +45,8 @@ def update_connection(db: Session, connection_id: str, **kwargs) -> PGConnection
         return None
     if "password" in kwargs and kwargs["password"]:
         kwargs["encrypted_password"] = encrypt_password(kwargs.pop("password"))
+    if "host" in kwargs and kwargs["host"]:
+        kwargs["host"] = _clean_host(kwargs["host"])
     for key, value in kwargs.items():
         if value is not None and hasattr(conn, key):
             setattr(conn, key, value)
@@ -60,11 +67,15 @@ def delete_connection(db: Session, connection_id: str) -> bool:
 def test_connection(conn: PGConnection) -> dict:
     password = decrypt_password(conn.encrypted_password)
     start = time.time()
+    host = _clean_host(conn.host)
+    env = {"PGPASSWORD": password}
+    if conn.ssl_mode != "disable":
+        env["PGSSLMODE"] = conn.ssl_mode
     try:
         result = subprocess.run(
             [
                 "psql",
-                "-h", conn.host,
+                "-h", host,
                 "-p", str(conn.port),
                 "-U", conn.username,
                 "-d", conn.database,
@@ -76,7 +87,7 @@ def test_connection(conn: PGConnection) -> dict:
             capture_output=True,
             text=True,
             timeout=15,
-            env={"PGPASSWORD": password},
+            env=env,
         )
         latency = (time.time() - start) * 1000
         if result.returncode == 0:
@@ -101,5 +112,8 @@ def test_connection(conn: PGConnection) -> dict:
 
 def get_pg_dsn(conn: PGConnection, dbname: str | None = None) -> str:
     password = decrypt_password(conn.encrypted_password)
-    dsn = f"postgresql://{conn.username}:{password}@{conn.host}:{conn.port}/{dbname or conn.database}"
+    host = _clean_host(conn.host)
+    dsn = f"postgresql://{conn.username}:{password}@{host}:{conn.port}/{dbname or conn.database}"
+    if conn.ssl_mode != "disable":
+        dsn += f"?sslmode={conn.ssl_mode}"
     return dsn

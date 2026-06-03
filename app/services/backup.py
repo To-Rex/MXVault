@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import subprocess
 import time
 from uuid import uuid4
@@ -46,10 +47,11 @@ def run_backup(
     log_lines = []
 
     try:
+        clean_host = re.sub(r'^https?://', '', connection.host).rstrip('/')
         pg_dump_cmd = [
             settings.pg_dump_path,
             "-Fc",
-            "-h", connection.host,
+            "-h", clean_host,
             "-p", str(connection.port),
             "-U", connection.username,
             "-d", connection.database,
@@ -58,11 +60,10 @@ def run_backup(
             "-f", filepath,
         ]
 
-        if connection.ssl_mode != "disable":
-            pg_dump_cmd.append(f"--sslmode={connection.ssl_mode}")
-
         env = os.environ.copy()
         env["PGPASSWORD"] = password
+        if connection.ssl_mode != "disable":
+            env["PGSSLMODE"] = connection.ssl_mode
 
         log_lines.append(f"Starting backup of {connection.database} at {datetime.datetime.now().isoformat()}")
         log_lines.append(f"Command: {' '.join(pg_dump_cmd)}")
