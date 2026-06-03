@@ -7,6 +7,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import SessionLocal
 from app.models.connection import PGConnection
 from app.models.schedule import BackupSchedule
@@ -19,7 +20,11 @@ from app.services.notification import (
 
 logger = logging.getLogger("mxvault.scheduler")
 
-scheduler = BackgroundScheduler()
+_tz = settings.scheduler_timezone or None
+if _tz:
+    logger.info(f"Scheduler timezone: {_tz}")
+
+scheduler = BackgroundScheduler(timezone=_tz)
 _scheduled_jobs: dict[str, str] = {}
 _connection_states: dict[str, bool] = {}
 _HEALTH_CHECK_INTERVAL_MINUTES = 5
