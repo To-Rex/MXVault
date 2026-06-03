@@ -83,10 +83,11 @@ def update_telegram(
     chat_id: str = Form(""),
     enabled: bool = Form(False),
     send_file: bool = Form(False),
+    broadcast: bool = Form(False),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    save_telegram_config(db, bot_token, chat_id, enabled, send_file)
+    save_telegram_config(db, bot_token, chat_id, enabled, send_file, broadcast)
     log_audit(db, action="settings_telegram_updated", user_id=user.id, username=user.username)
 
     test_msg = "✅ <b>MXVault</b>\nTelegram integration is working!\nBackup notifications will be sent here."

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import Base, SessionLocal, engine
+from app.services.auth import get_session_user
 from app.services.scheduler import shutdown_scheduler, start_scheduler
 from app.templates import templates
 
@@ -80,8 +81,16 @@ def robots():
 
 
 @app.get("/")
-def root():
-    return RedirectResponse(url="/dashboard")
+def root(request: Request):
+    user = None
+    db = SessionLocal()
+    try:
+        token = request.cookies.get("session_token")
+        if token:
+            user = get_session_user(token, db)
+    finally:
+        db.close()
+    return templates.TemplateResponse(request, "landing.html", {"request": request, "user": user})
 
 
 @app.get("/health")

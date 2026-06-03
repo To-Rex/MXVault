@@ -65,20 +65,23 @@ def get_telegram_config(db: Session) -> dict:
     chat_id = db.query(AppSetting).filter(AppSetting.key == "telegram_chat_id").first()
     enabled = db.query(AppSetting).filter(AppSetting.key == "telegram_enabled").first()
     send_file = db.query(AppSetting).filter(AppSetting.key == "telegram_send_file").first()
+    broadcast = db.query(AppSetting).filter(AppSetting.key == "telegram_broadcast").first()
     return {
         "bot_token": bot_token.value if bot_token else "",
         "chat_id": chat_id.value if chat_id else "",
         "enabled": (enabled.value if enabled else "false").lower() == "true",
         "send_file": (send_file.value.lower() == "true") if send_file else True,
+        "broadcast": (broadcast.value.lower() == "true") if broadcast else False,
     }
 
 
-def save_telegram_config(db: Session, bot_token: str, chat_id: str, enabled: bool, send_file: bool = True):
+def save_telegram_config(db: Session, bot_token: str, chat_id: str, enabled: bool, send_file: bool = True, broadcast: bool = False):
     for key, value in [
         ("telegram_bot_token", bot_token),
         ("telegram_chat_id", chat_id),
         ("telegram_enabled", str(enabled).lower()),
         ("telegram_send_file", str(send_file).lower()),
+        ("telegram_broadcast", str(broadcast).lower()),
     ]:
         setting = db.query(AppSetting).filter(AppSetting.key == key).first()
         if setting:
@@ -262,25 +265,59 @@ def send_email_with_attachment_for_accounts(db: Session, subject: str, body: str
     return any_sent
 
 
+def _get_broadcast_chat_ids(bot_token: str) -> list[str]:
+    """Fetch all unique chat IDs that have interacted with the bot."""
+    try:
+        import requests
+        url = f"https://api.telegram.org/bot{bot_token}/getUpdates"
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:
+            return []
+        data = resp.json()
+        if not data.get("ok"):
+            return []
+        chat_ids = set()
+        for update in data.get("result", []):
+            msg = update.get("message") or update.get("channel_post") or {}
+            chat = msg.get("chat", {})
+            cid = str(chat.get("id", ""))
+            if cid:
+                chat_ids.add(cid)
+        return sorted(chat_ids)
+    except Exception as e:
+        logger.error(f"Failed to fetch broadcast chat IDs: {e}")
+        return []
+
+
 def send_telegram_message(db: Session, message: str) -> bool:
     config = get_telegram_config(db)
-    if not config["enabled"] or not config["bot_token"] or not config["chat_id"]:
+    if not config["enabled"] or not config["bot_token"]:
+        return False
+    if not config["broadcast"] and not config["chat_id"]:
         return False
 
     try:
         import requests
 
-        url = f"https://api.telegram.org/bot{config['bot_token']}/sendMessage"
-        response = requests.post(
-            url,
-            json={
-                "chat_id": config["chat_id"],
-                "text": message,
-                "parse_mode": "HTML",
-            },
-            timeout=10,
-        )
-        return response.status_code == 200
+        if config["broadcast"]:
+            chat_ids = _get_broadcast_chat_ids(config["bot_token"])
+            if not chat_ids:
+                logger.warning("No chat IDs found for broadcast")
+                return False
+            any_sent = False
+            for cid in chat_ids:
+                url = f"https://api.telegram.org/bot{config['bot_token']}/sendMessage"
+                try:
+                    r = requests.post(url, json={"chat_id": cid, "text": message, "parse_mode": "HTML"}, timeout=10)
+                    if r.status_code == 200:
+                        any_sent = True
+                except Exception:
+                    pass
+            return any_sent
+        else:
+            url = f"https://api.telegram.org/bot{config['bot_token']}/sendMessage"
+            response = requests.post(url, json={"chat_id": config["chat_id"], "text": message, "parse_mode": "HTML"}, timeout=10)
+            return response.status_code == 200
     except ImportError:
         logger.warning("requests library not installed, cannot send Telegram message")
         return False
@@ -301,21 +338,36 @@ def send_telegram_document(db: Session, filepath: str, caption: str = "") -> boo
         return False
 
     config = get_telegram_config(db)
-    if not config["enabled"] or not config["bot_token"] or not config["chat_id"]:
+    if not config["enabled"] or not config["bot_token"]:
+        return False
+    if not config["broadcast"] and not config["chat_id"]:
         return False
 
     try:
         import requests
 
-        url = f"https://api.telegram.org/bot{config['bot_token']}/sendDocument"
-        with open(filepath, "rb") as f:
-            response = requests.post(
-                url,
-                data={"chat_id": config["chat_id"], "caption": caption, "parse_mode": "HTML"},
-                files={"document": (_os.path.basename(filepath), f)},
-                timeout=120,
-            )
-        return response.status_code == 200
+        if config["broadcast"]:
+            chat_ids = _get_broadcast_chat_ids(config["bot_token"])
+            if not chat_ids:
+                return False
+            any_sent = False
+            for cid in chat_ids:
+                try:
+                    url = f"https://api.telegram.org/bot{config['bot_token']}/sendDocument"
+                    with open(filepath, "rb") as f:
+                        r = requests.post(url, data={"chat_id": cid, "caption": caption, "parse_mode": "HTML"},
+                                          files={"document": (_os.path.basename(filepath), f)}, timeout=120)
+                    if r.status_code == 200:
+                        any_sent = True
+                except Exception:
+                    pass
+            return any_sent
+        else:
+            url = f"https://api.telegram.org/bot{config['bot_token']}/sendDocument"
+            with open(filepath, "rb") as f:
+                response = requests.post(url, data={"chat_id": config["chat_id"], "caption": caption, "parse_mode": "HTML"},
+                                         files={"document": (_os.path.basename(filepath), f)}, timeout=120)
+            return response.status_code == 200
     except ImportError:
         logger.warning("requests library not installed, cannot send Telegram document")
         return False

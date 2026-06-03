@@ -66,8 +66,8 @@ def create_default_admin(db: DBSession) -> User:
     return create_user(
         db=db,
         username="admin",
-        email="admin@mxvault.local",
-        password="admin123",
+        email="admin@mxsoft.uz",
+        password="admin",
         display_name="Administrator",
         is_admin=True,
     )

@@ -60,15 +60,20 @@
       </div>
     </div>
 
-    <form method="post" action="/settings/telegram" class="space-y-4">
+    <form method="post" action="/settings/telegram" class="space-y-4" x-data="{ broadcast: {{ 'true' if telegram.get('broadcast', false) else 'false' }} }">
       <div>
         <label class="label">Bot Token</label>
         <input type="password" name="bot_token" class="input" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" value="{{ telegram.bot_token or '' }}">
       </div>
       <div>
         <label class="label">Chat ID</label>
-        <input type="text" name="chat_id" class="input" placeholder="-1001234567890" value="{{ telegram.chat_id or '' }}">
+        <input type="text" name="chat_id" class="input" placeholder="-1001234567890" value="{{ telegram.chat_id or '' }}" :disabled="broadcast">
+        <p class="text-xs text-gray-500 mt-1" x-show="broadcast">Chat ID is disabled — notifications will be sent to all users who started the bot.</p>
       </div>
+      <label class="flex items-center gap-3 cursor-pointer group">
+        <input type="checkbox" name="broadcast" x-model="broadcast" value="true" class="checkbox">
+        <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Send to all users (broadcast)</span>
+      </label>
       <label class="flex items-center gap-3 cursor-pointer group">
         <input type="checkbox" name="enabled" {% if telegram.enabled %}checked{% endif %} value="true" class="checkbox">
         <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Enable Telegram Notifications</span>
