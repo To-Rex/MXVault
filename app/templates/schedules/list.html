@@ -1,6 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Schedules{% endblock %}
 {% block page_title %}Schedules{% endblock %}
+
+{% block header_controls_extra %}
+<div class="flex items-center gap-1.5 ml-2 text-xs text-gray-400" id="header-clock">
+  <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </svg>
+  <span class="header-clock-time tabular-nums font-mono text-indigo-300"></span>
+  <span class="text-gray-600">·</span>
+  <span class="header-clock-tz text-gray-500"></span>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div></div>
@@ -107,6 +119,24 @@
 
 {% block extra_scripts %}
 <script>
+(function initClock() {
+  var wrap = document.getElementById('header-clock');
+  if (!wrap) return;
+  var timeEl = wrap.querySelector('.header-clock-time');
+  var tzEl = wrap.querySelector('.header-clock-tz');
+  if (!timeEl || !tzEl) return;
+
+  var off = -(new Date().getTimezoneOffset());
+  var sign = off >= 0 ? '+' : '-';
+  var h = String(Math.floor(Math.abs(off) / 60)).padStart(2, '0');
+  var m = String(Math.abs(off) % 60).padStart(2, '0');
+  tzEl.textContent = 'UTC' + sign + h + ':' + m;
+
+  function tick() { timeEl.textContent = new Date().toLocaleTimeString(); }
+  tick();
+  setInterval(tick, 1000);
+})();
+
 function updateCountdowns() {
   var now = Date.now();
   var elements = document.querySelectorAll('.countdown');
