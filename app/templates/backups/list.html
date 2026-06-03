@@ -30,10 +30,38 @@
 </div>
 
 {% if backups %}
-<div class="table-container stagger-2">
+<!-- Bulk Actions -->
+<div id="bulkBar" class="glass-card p-3 mb-4 flex items-center justify-between stagger-2" style="display:none;animation: fadeDown 0.3s ease-out;" x-data="{ checked: 0 }">
+  <div class="flex items-center gap-3">
+    <span class="text-sm text-gray-400" x-text="checked + ' selected'">0 selected</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <button onclick="submitBulkDelete()" class="btn btn-ghost btn-sm text-red-400 hover:text-red-300 hover:bg-red-500/10">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      Delete Selected
+    </button>
+    <form id="deleteAllForm" method="post" action="/backups/delete-all" onsubmit="return confirm('Delete ALL backups shown below? This cannot be undone.')" class="inline">
+      {% if filter_connection_id %}<input type="hidden" name="connection_id" value="{{ filter_connection_id }}">{% endif %}
+      {% if filter_status %}<input type="hidden" name="status_filter" value="{{ filter_status }}">{% endif %}
+      <button type="submit" class="btn btn-ghost btn-sm text-red-500 hover:text-red-400 hover:bg-red-500/10">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        Delete All
+      </button>
+    </form>
+  </div>
+</div>
+
+<form id="bulkForm" method="post" action="/backups/bulk-delete">
+  <input type="hidden" name="backup_ids" id="backupIdsInput" value="">
+</form>
+
+<div class="table-container stagger-3">
   <table class="w-full">
     <thead>
       <tr>
+        <th class="table-header w-10">
+          <input type="checkbox" onclick="toggleAll(this)" class="checkbox">
+        </th>
         <th class="table-header">Database</th>
         <th class="table-header">Connection</th>
         <th class="table-header">Status</th>
@@ -46,7 +74,10 @@
     </thead>
     <tbody class="divide-y divide-gray-700/10">
       {% for b in backups %}
-      <tr class="stagger-{{ loop.index }}">
+      <tr class="stagger-{{ loop.index }}" id="row-{{ b.id }}">
+        <td class="table-cell">
+          <input type="checkbox" value="{{ b.id }}" onchange="updateBulkBar()" class="checkbox backup-checkbox">
+        </td>
         <td class="table-cell">
           <a href="/backups/{{ b.id }}" class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-2 transition-colors">
             <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center text-xs font-bold text-indigo-400">{{ b.database_name[:2].upper() }}</div>
@@ -89,7 +120,7 @@
 </div>
 
 {% if total_pages > 1 %}
-<div class="flex items-center justify-between pt-4 stagger-3">
+<div class="flex items-center justify-between pt-4 stagger-4">
   <p class="text-sm text-gray-500">{{ total }} backup{{ 's' if total != 1 else '' }} total</p>
   <div class="flex gap-2">
     {% if page > 1 %}
@@ -114,4 +145,33 @@
   <a href="/connections" class="btn btn-primary">View Connections</a>
 </div>
 {% endif %}
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function toggleAll(master) {
+  document.querySelectorAll('.backup-checkbox').forEach(function(cb) {
+    cb.checked = master.checked;
+  });
+  updateBulkBar();
+}
+function updateBulkBar() {
+  var checked = document.querySelectorAll('.backup-checkbox:checked');
+  var bar = document.getElementById('bulkBar');
+  if (checked.length > 0) {
+    bar.style.display = 'flex';
+    bar.querySelector('[x-text]').textContent = checked.length + ' selected';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+function submitBulkDelete() {
+  var checked = document.querySelectorAll('.backup-checkbox:checked');
+  if (checked.length === 0) return;
+  var ids = [];
+  checked.forEach(function(cb) { ids.push(cb.value); });
+  if (!confirm('Delete ' + ids.length + ' selected backup(s)?')) return;
+  document.getElementById('backupIdsInput').value = ids.join(',');
+  document.getElementById('bulkForm').submit();
+}
+</script>
 {% endblock %}

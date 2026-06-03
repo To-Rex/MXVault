@@ -1,4 +1,5 @@
 import json
+import os
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -46,13 +47,53 @@ def list_backups(
         "filter_search": search,
     })
 
+@router.post("/bulk-delete")
+def bulk_delete_backups(backup_ids: str = Form(...), db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    ids = [id.strip() for id in backup_ids.split(",") if id.strip()]
+    deleted = 0
+    for bid in ids:
+        backup = db.query(BackupLog).filter(BackupLog.id == bid).first()
+        if not backup:
+            continue
+        if backup.destination_path and os.path.exists(backup.destination_path):
+            try:
+                os.remove(backup.destination_path)
+            except OSError:
+                pass
+        db.delete(backup)
+        log_audit(db, action="backup_deleted", user_id=user.id, username=user.username,
+                  resource_type="backup", resource_id=bid)
+        deleted += 1
+    db.commit()
+    return RedirectResponse(url="/backups", status_code=302)
 
-@router.get("/{backup_id}")
-def view_backup(backup_id: str, request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    backup = db.query(BackupLog).filter(BackupLog.id == backup_id).first()
-    if not backup:
-        raise HTTPException(status_code=404, detail="Backup not found")
-    return templates.TemplateResponse(request, "backups/view.html", {"request": request, "user": user, "backup": backup})
+
+@router.post("/delete-all")
+def delete_all_backups(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    connection_id: str = Form(default=""),
+    status_filter: str = Form(default=""),
+):
+    query = db.query(BackupLog)
+    if connection_id:
+        query = query.filter(BackupLog.connection_id == connection_id)
+    if status_filter:
+        query = query.filter(BackupLog.status == status_filter)
+    backups = query.all()
+    count = 0
+    for backup in backups:
+        if backup.destination_path and os.path.exists(backup.destination_path):
+            try:
+                os.remove(backup.destination_path)
+            except OSError:
+                pass
+        db.delete(backup)
+        log_audit(db, action="backup_deleted", user_id=user.id, username=user.username,
+                  resource_type="backup", resource_id=backup.id)
+        count += 1
+    db.commit()
+    return RedirectResponse(url="/backups", status_code=302)
 
 
 @router.post("/{backup_id}/delete")
@@ -61,7 +102,6 @@ def delete_backup(backup_id: str, db: Session = Depends(get_db), user: User = De
     if not backup:
         raise HTTPException(status_code=404, detail="Backup not found")
 
-    import os
     if backup.destination_path and os.path.exists(backup.destination_path):
         try:
             os.remove(backup.destination_path)
@@ -100,3 +140,11 @@ def run_backup_route(
               details=f"Backup of '{connection.name}' - status: {backup.status}")
 
     return RedirectResponse(url=f"/backups/{backup.id}", status_code=302)
+
+
+@router.get("/{backup_id}")
+def view_backup(backup_id: str, request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    backup = db.query(BackupLog).filter(BackupLog.id == backup_id).first()
+    if not backup:
+        raise HTTPException(status_code=404, detail="Backup not found")
+    return templates.TemplateResponse(request, "backups/view.html", {"request": request, "user": user, "backup": backup})
