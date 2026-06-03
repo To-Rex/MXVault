@@ -13,6 +13,7 @@ from app.database import Base, SessionLocal, engine
 from app.services.auth import get_session_user
 from app.services.scheduler import shutdown_scheduler, start_scheduler
 from app.templates import templates
+from app.utils.psql_installer import ensure_psql_installed
 
 logger = logging.getLogger("mxvault")
 
@@ -35,6 +36,7 @@ def init_db():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.app_name} v{settings.app_version}")
+    ensure_psql_installed()
     init_db()
     start_scheduler()
 
